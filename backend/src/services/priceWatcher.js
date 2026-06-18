@@ -1,32 +1,46 @@
 const db = require('../db');
-const { createTicker } = require('./kite');
+const yahooFinance = require('./yahooFinance');
 const { sendPriceAlert } = require('./notify');
 
+// Polling interval. Yahoo Finance data for Indian stocks is already delayed
+// ~15 minutes, so polling faster than this doesn't buy real "instant" alerts
+// — it just adds load. Kept short anyway so alerts fire as soon as the
+// delayed price updates.
+const POLL_INTERVAL_MS = Number(process.env.POLL_INTERVAL_MS || 30000);
+
 // Tracks which watchlist rows are currently in a "breached" state so we send
-// exactly one notification per crossing, not one per tick while it stays past
-// the limit. Resets once the price moves back to the safe side.
+// exactly one notification per crossing, not one per poll while it stays
+// past the limit. Resets once the price moves back to the safe side.
 const breachedIds = new Set();
 
-let ticker = null;
+let timer = null;
 
 function isBreached(row, price) {
   return row.direction === 'below' ? price < row.limit_price : price > row.limit_price;
 }
 
-async function handleTick(tick) {
-  const rows = db
-    .prepare('SELECT * FROM watchlist WHERE instrument_token = ?')
-    .all(tick.instrument_token);
+async function pollOnce() {
+  const rows = db.prepare('SELECT * FROM watchlist').all();
+  if (rows.length === 0) return;
+
+  const symbols = [...new Set(rows.map((r) => r.instrument_token))];
+  let prices;
+  try {
+    prices = await yahooFinance.getQuotes(symbols);
+  } catch (err) {
+    console.error('Price poll failed:', err.message);
+    return;
+  }
 
   for (const row of rows) {
-    const price = tick.last_price;
+    const price = prices[row.instrument_token];
+    if (price == null) continue;
+
     const breached = isBreached(row, price);
 
     if (breached && !breachedIds.has(row.id)) {
       breachedIds.add(row.id);
-      const device = db
-        .prepare('SELECT device_token FROM devices WHERE device_token = ?')
-        .get(row.device_token);
+      const device = db.prepare('SELECT device_token FROM devices WHERE device_token = ?').get(row.device_token);
       if (device) {
         try {
           await sendPriceAlert(device.device_token, {
@@ -47,34 +61,15 @@ async function handleTick(tick) {
   }
 }
 
-function resubscribe() {
-  if (!ticker) return;
-  const tokens = db.prepare('SELECT DISTINCT instrument_token FROM watchlist').all().map((r) => r.instrument_token);
-  if (tokens.length > 0) {
-    ticker.subscribe(tokens);
-    ticker.setMode(ticker.modeLTP, tokens);
-  }
-}
-
 function start() {
-  ticker = createTicker();
-
-  ticker.connect();
-  ticker.on('connect', resubscribe);
-  ticker.on('reconnect', resubscribe);
-  ticker.on('ticks', (ticks) => {
-    ticks.forEach((tick) => handleTick(tick).catch((e) => console.error(e)));
-  });
-  ticker.on('error', (err) => console.error('KiteTicker error:', err));
-  ticker.on('close', () => console.warn('KiteTicker connection closed'));
-
-  return ticker;
+  if (timer) return;
+  pollOnce().catch((e) => console.error(e));
+  timer = setInterval(() => pollOnce().catch((e) => console.error(e)), POLL_INTERVAL_MS);
 }
 
-// Call this whenever the watchlist changes (add/remove) so the ticker
-// subscribes/unsubscribes to the right set of instruments.
-function onWatchlistChanged() {
-  resubscribe();
-}
+// No-op kept so route handlers that used to trigger a WebSocket
+// resubscribe can call this unconditionally; polling just picks up
+// watchlist changes on its next cycle automatically.
+function onWatchlistChanged() {}
 
 module.exports = { start, onWatchlistChanged };

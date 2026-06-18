@@ -6,14 +6,13 @@ const db = new Database(path.join(__dirname, '..', 'data.sqlite'));
 db.exec(`
   CREATE TABLE IF NOT EXISTS devices (
     device_token TEXT PRIMARY KEY,
-    kite_access_token TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
   );
 
   CREATE TABLE IF NOT EXISTS watchlist (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     device_token TEXT NOT NULL,
-    instrument_token INTEGER NOT NULL,
+    instrument_token TEXT NOT NULL, -- Yahoo Finance symbol, e.g. "RELIANCE.NS"
     tradingsymbol TEXT NOT NULL,
     exchange TEXT NOT NULL,
     limit_price REAL NOT NULL,
