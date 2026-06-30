@@ -51,10 +51,11 @@ async function getQuotes(symbols) {
   console.log('[poll] raw response:', JSON.stringify(data).slice(0, 500));
 
   const prices = {};
-  // spark response: { spark: { result: [ { symbol, response: [{ meta: { regularMarketPrice } }] } ] } }
-  for (const item of data.spark?.result || []) {
-    const price = item?.response?.[0]?.meta?.regularMarketPrice;
-    if (typeof price === 'number') prices[item.symbol] = price;
+  // response format: { "INFY.NS": { close: [1009.9], ... } }
+  for (const [symbol, info] of Object.entries(data)) {
+    const closes = info?.close;
+    const price = Array.isArray(closes) && closes.length > 0 ? closes[closes.length - 1] : null;
+    if (typeof price === 'number') prices[symbol] = price;
   }
   console.log('[poll] prices fetched:', JSON.stringify(prices));
   return prices;
