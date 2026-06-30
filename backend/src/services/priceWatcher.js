@@ -21,6 +21,7 @@ function isBreached(row, price) {
 
 async function pollOnce() {
   const rows = db.prepare('SELECT * FROM watchlist').all();
+  console.log('[poll] watchlist rows:', rows.length, rows.map(r => r.instrument_token));
   if (rows.length === 0) return;
 
   const symbols = [...new Set(rows.map((r) => r.instrument_token))];

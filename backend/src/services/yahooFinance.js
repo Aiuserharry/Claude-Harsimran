@@ -43,9 +43,12 @@ async function getQuotes(symbols) {
 
   // spark endpoint returns the latest close price without requiring auth
   const url = `${QUOTE_URL}?symbols=${encodeURIComponent(symbols.join(','))}&range=1d&interval=1d`;
+  console.log('[poll] fetching url:', url);
   const res = await fetch(url, { headers: HEADERS });
+  console.log('[poll] response status:', res.status);
   if (!res.ok) throw new Error(`Yahoo quote fetch failed: ${res.status}`);
   const data = await res.json();
+  console.log('[poll] raw response:', JSON.stringify(data).slice(0, 500));
 
   const prices = {};
   // spark response: { spark: { result: [ { symbol, response: [{ meta: { regularMarketPrice } }] } ] } }
