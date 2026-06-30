@@ -48,11 +48,12 @@ async function getQuotes(symbols) {
   const data = await res.json();
 
   const prices = {};
-  for (const [symbol, info] of Object.entries(data.spark?.result ? {} : data)) {
-    // spark response: { "RELIANCE.NS": { response: [{ meta: { regularMarketPrice } }] } }
-    const price = info?.response?.[0]?.meta?.regularMarketPrice;
-    if (typeof price === 'number') prices[symbol] = price;
+  // spark response: { spark: { result: [ { symbol, response: [{ meta: { regularMarketPrice } }] } ] } }
+  for (const item of data.spark?.result || []) {
+    const price = item?.response?.[0]?.meta?.regularMarketPrice;
+    if (typeof price === 'number') prices[item.symbol] = price;
   }
+  console.log('[poll] prices fetched:', JSON.stringify(prices));
   return prices;
 }
 
