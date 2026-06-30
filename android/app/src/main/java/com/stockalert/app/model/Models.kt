@@ -1,7 +1,7 @@
 package com.stockalert.app.model
 
 data class Stock(
-    val instrument_token: Long,
+    val instrument_token: String,
     val tradingsymbol: String,
     val name: String?,
     val exchange: String
@@ -10,7 +10,7 @@ data class Stock(
 data class WatchlistItem(
     val id: Long,
     val device_token: String,
-    val instrument_token: Long,
+    val instrument_token: String,
     val tradingsymbol: String,
     val exchange: String,
     val limit_price: Double,
@@ -21,7 +21,7 @@ data class RegisterDeviceRequest(val device_token: String)
 
 data class AddWatchlistRequest(
     val device_token: String,
-    val instrument_token: Long,
+    val instrument_token: String,
     val tradingsymbol: String,
     val exchange: String,
     val limit_price: Double,
