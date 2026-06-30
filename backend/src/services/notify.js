@@ -1,13 +1,17 @@
 const admin = require('firebase-admin');
 const path = require('path');
 
-const serviceAccountPath = path.resolve(
-  process.env.FIREBASE_SERVICE_ACCOUNT_PATH || './firebase-service-account.json'
-);
+let credential;
+if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
+  credential = admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON));
+} else {
+  const serviceAccountPath = path.resolve(
+    process.env.FIREBASE_SERVICE_ACCOUNT_PATH || './firebase-service-account.json'
+  );
+  credential = admin.credential.cert(require(serviceAccountPath));
+}
 
-admin.initializeApp({
-  credential: admin.credential.cert(require(serviceAccountPath)),
-});
+admin.initializeApp({ credential });
 
 async function sendPriceAlert(deviceToken, { tradingsymbol, exchange, price, limitPrice, direction }) {
   const direction_word = direction === 'below' ? 'dropped below' : 'risen above';
