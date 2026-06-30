@@ -17,7 +17,7 @@ android {
 
         // Backend base URL. Point this at wherever the backend from
         // /backend is deployed (e.g. http://<your-server-ip>:4000/).
-        buildConfigField("String", "BACKEND_BASE_URL", "\"http://192.168.0.145:4000/\"")
+        buildConfigField("String", "BACKEND_BASE_URL", "\"https://stock-alert-backend-lgz9.onrender.com/\"")
     }
 
     buildTypes {
