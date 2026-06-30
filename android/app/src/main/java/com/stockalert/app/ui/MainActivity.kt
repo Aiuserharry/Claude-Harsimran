@@ -9,6 +9,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.addTextChangedListener
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.messaging.FirebaseMessaging
 import com.stockalert.app.R
@@ -41,12 +42,14 @@ class MainActivity : AppCompatActivity() {
         }
 
         searchAdapter = StockSearchAdapter(onAdd = { addStockToWatchlist(it) })
+        binding.recyclerSearchResults.layoutManager = LinearLayoutManager(this)
         binding.recyclerSearchResults.adapter = searchAdapter
 
         watchlistAdapter = WatchlistAdapter(
             onEditLimit = { showLimitDialog(it) },
             onRemove = { removeFromWatchlist(it) }
         )
+        binding.recyclerWatchlist.layoutManager = LinearLayoutManager(this)
         binding.recyclerWatchlist.adapter = watchlistAdapter
 
         binding.inputSearch.addTextChangedListener { text ->
