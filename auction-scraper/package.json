@@ -1,0 +1,13 @@
+{
+  "name": "auction-scraper",
+  "version": "1.0.0",
+  "description": "On-demand CLI that scrapes distress-sale auction portals (starting with IBAPI) and filters listings by value/category.",
+  "main": "src/cli.js",
+  "type": "commonjs",
+  "scripts": {
+    "scrape": "node src/cli.js"
+  },
+  "dependencies": {
+    "playwright": "^1.47.0"
+  }
+}
