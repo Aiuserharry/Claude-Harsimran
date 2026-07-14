@@ -4,8 +4,16 @@ On-demand CLI that scrapes distress-sale auction portals (bank NPA/SARFAESI
 auctions, govt e-auctions, etc.) and filters listings by value/category.
 Nothing runs on a schedule — it only does anything when you invoke it.
 
-Currently supports one site: **IBAPI** (ibapi.in — Indian Banks Association's
-aggregator for public sector bank mortgaged-property auctions).
+Currently supports two sites:
+- **IBAPI** (ibapi.in) — Indian Banks Association's aggregator for public
+  sector bank mortgaged-property (SARFAESI) auctions. Structured HTML
+  results with reserve price/EMD.
+- **IBBI** (ibbi.gov.in) — liquidation auction notices for companies in
+  corporate insolvency. This one's a paginated list of PDF sale notices,
+  not a structured table — reserve price/asset details live inside each
+  PDF's free text, which this tool deliberately does not regex-parse (too
+  unreliable for numbers you'd act on financially). It surfaces notice
+  titles + PDF links, and can download the PDFs for you to read.
 
 ## ⚠️ First run will likely need one fix-up round
 
@@ -29,14 +37,19 @@ npx playwright install chromium   # downloads a browser Playwright can drive
 ## Usage
 
 ```
-npm run scrape -- --state=Maharashtra --minReserve=500000 --maxReserve=5000000 --debug
+npm run scrape -- --site=ibapi --state=Maharashtra --minReserve=500000 --maxReserve=5000000 --debug
+npm run scrape -- --site=ibbi --maxPages=5 --downloadPdfs --debug
 ```
 
 Flags (all optional):
-- `--site` — which adapter to use (default `ibapi`)
-- `--state`, `--district`, `--bank`, `--propertyType` — applied as portal
-  search filters if a matching dropdown is found
-- `--minReserve`, `--maxReserve` — post-filter on parsed reserve price (₹)
+- `--site` — which adapter to use (default `ibapi`; also `ibbi`)
+- `--state`, `--district`, `--bank`, `--propertyType` — IBAPI-only search
+  filters, applied if a matching dropdown is found
+- `--minReserve`, `--maxReserve` — IBAPI-only post-filter on parsed reserve
+  price (₹)
+- `--maxPages` — IBBI-only, how many list pages to walk (default 3)
+- `--downloadPdfs` — IBBI-only, download each notice PDF into
+  `out/ibbi-pdfs/`
 - `--out` — output JSON path (default `out/<site>-<timestamp>.json`)
 - `--debug` — dump page HTML/screenshot/select-inventory to `debug/` at each
   step, and print warnings for filters that couldn't be applied

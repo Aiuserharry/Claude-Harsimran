@@ -4,6 +4,7 @@ const { withBrowser } = require('./browser');
 
 const SITES = {
   ibapi: require('./sites/ibapi'),
+  ibbi: require('./sites/ibbi'),
 };
 
 function parseArgs(argv) {
@@ -32,10 +33,12 @@ async function main() {
     propertyType: args.propertyType || null,
     minReserve: args.minReserve ? Number(args.minReserve) : null,
     maxReserve: args.maxReserve ? Number(args.maxReserve) : null,
+    maxPages: args.maxPages ? Number(args.maxPages) : null,
   };
 
   const debugDir = path.join(__dirname, '..', 'debug');
-  const opts = { debug: Boolean(args.debug), debugDir };
+  const outDir = path.join(__dirname, '..', 'out');
+  const opts = { debug: Boolean(args.debug), debugDir, outDir, downloadPdfs: Boolean(args.downloadPdfs) };
 
   console.log(`Scraping ${args.site} with filters:`, filters);
 
@@ -43,14 +46,21 @@ async function main() {
 
   console.log(`Found ${listings.length} matching listing(s).`);
   for (const l of listings.slice(0, 20)) {
-    console.log(`- [${l.bank || '?'}] ${l.description || l.propertyType || '(no description)'} — ₹${l.reservePrice ?? l.reservePriceRaw} — ${l.auctionDate}`);
+    console.log(`- ${summarizeListing(l)}`);
   }
   if (listings.length > 20) console.log(`  ...and ${listings.length - 20} more.`);
 
-  const outPath = args.out || path.join(__dirname, '..', 'out', `${args.site}-${Date.now()}.json`);
+  const outPath = args.out || path.join(outDir, `${args.site}-${Date.now()}.json`);
   fs.mkdirSync(path.dirname(outPath), { recursive: true });
   fs.writeFileSync(outPath, JSON.stringify(listings, null, 2));
   console.log(`Wrote full results to ${outPath}`);
+}
+
+function summarizeListing(l) {
+  if (l.source === 'ibbi') {
+    return `${l.title || '(untitled notice)'} — ${l.pdfUrl}`;
+  }
+  return `[${l.bank || '?'}] ${l.description || l.propertyType || '(no description)'} — ₹${l.reservePrice ?? l.reservePriceRaw} — ${l.auctionDate}`;
 }
 
 main().catch((err) => {
