@@ -43,15 +43,19 @@ async function scrape(page, filters, opts) {
 
   await selectOptionContaining(page, SEL.bank, filters.bank);
 
-  const checked = await page.locator(SEL.termsCheckbox).isChecked().catch(() => false);
-  if (!checked) await page.locator(SEL.termsCheckbox).check({ force: true });
+  await acceptTerms(page, opts);
 
   const searchButton = page.locator(SEL.searchButton);
-  await page.waitForFunction(
+  const enabled = await page.waitForFunction(
     (sel) => !document.querySelector(sel)?.disabled,
     SEL.searchButton,
     { timeout: 10000 }
-  ).catch(() => console.warn('[ibapi] Search button never became enabled.'));
+  ).then(() => true).catch(() => false);
+
+  if (!enabled) {
+    if (opts.debug) await dumpDebug(page, opts.debugDir, 'ibapi-terms-failed');
+    console.warn('[ibapi] Search button never became enabled after accepting terms — see debug/ibapi-terms-failed.* if --debug was on.');
+  }
   await searchButton.click();
 
   // Results load via an async call into the #tbl_search DataTable; wait for
@@ -69,6 +73,37 @@ async function scrape(page, filters, opts) {
 
   const rows = await scrapeTableBySelector(page, SEL.resultsTable);
   return rows.map(normalizeRow).filter((r) => withinValueRange(r, filters));
+}
+
+// A plain simulated click on #chk_term doesn't stick (confirmed live: Playwright's
+// check() throws "Clicking the checkbox did not change its state") — some page JS
+// intercepts the click, probably to force the Terms modal open instead of a bare
+// toggle. Try several strategies in order, since we can't see sale_info_home.js:
+// (1) set the property directly + fire the events real user interaction would
+// produce, in case the click handler is what's reverting a native click but a
+// programmatic change event is still honored; (2) a real click as fallback in
+// case the page instead requires an isTrusted event.
+async function acceptTerms(page, opts) {
+  const checkbox = page.locator(SEL.termsCheckbox);
+  if (!(await checkbox.count())) {
+    console.warn('[ibapi] no terms checkbox found on page.');
+    return;
+  }
+
+  await checkbox.evaluate((el) => {
+    el.checked = true;
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+    el.dispatchEvent(new Event('click', { bubbles: true }));
+  });
+
+  const enabledAfterDirect = await page
+    .locator(SEL.searchButton)
+    .evaluate((el) => !el.disabled)
+    .catch(() => false);
+  if (enabledAfterDirect) return;
+
+  await checkbox.click({ force: true }).catch(() => {});
 }
 
 async function selectOptionContaining(page, selector, value) {

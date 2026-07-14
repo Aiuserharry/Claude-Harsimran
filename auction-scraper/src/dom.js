@@ -137,7 +137,31 @@ async function dumpDebug(page, dir, name) {
   }
   fs.writeFileSync(path.join(dir, `${name}.selects.json`), JSON.stringify(selectInfo, null, 2));
 
-  console.log(`[debug] wrote ${htmlPath}, ${pngPath}, and ${name}.selects.json`);
+  const checkboxes = await page.locator('input[type="checkbox"]').all();
+  const checkboxInfo = [];
+  for (const cb of checkboxes) {
+    checkboxInfo.push({
+      id: await cb.getAttribute('id'),
+      name: await cb.getAttribute('name'),
+      checked: await cb.isChecked().catch(() => null),
+      visible: await cb.isVisible().catch(() => null),
+    });
+  }
+  const buttons = await page.locator('input[type="button"], button').all();
+  const buttonInfo = [];
+  for (const b of buttons) {
+    buttonInfo.push({
+      id: await b.getAttribute('id'),
+      value: await b.getAttribute('value'),
+      disabled: await b.isDisabled().catch(() => null),
+    });
+  }
+  fs.writeFileSync(
+    path.join(dir, `${name}.controls.json`),
+    JSON.stringify({ checkboxes: checkboxInfo, buttons: buttonInfo }, null, 2)
+  );
+
+  console.log(`[debug] wrote ${htmlPath}, ${pngPath}, ${name}.selects.json, and ${name}.controls.json`);
 }
 
 module.exports = { scrapeKeyedTable, scrapeTableBySelector, trySelectByLabel, dumpDebug };
