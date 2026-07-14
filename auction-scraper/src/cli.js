@@ -65,7 +65,7 @@ function summarizeListing(l) {
   if (l.source === 'mstc') {
     return `[Lot ${l.lotNo || '?'}] ${l.description || '(no description)'} — ₹${l.reservePrice ?? l.reservePriceRaw} — ${l.location}`;
   }
-  return `[${l.bank || '?'}] ${l.description || l.propertyType || '(no description)'} — ₹${l.reservePrice ?? l.reservePriceRaw} — ${l.auctionDate}`;
+  return `[${l.bank || '?'}] ${l.description || '(no description)'} — ₹${l.reservePrice ?? l.reservePriceRaw} — ${l.auctionStart || l.auctionEnd || ''}`;
 }
 
 main().catch((err) => {

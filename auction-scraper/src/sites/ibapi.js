@@ -1,111 +1,117 @@
-const { scrapeKeyedTable, trySelectByLabel, dumpDebug } = require('../dom');
+const { scrapeTableBySelector, dumpDebug } = require('../dom');
 
 const URL = 'https://www.ibapi.in/sale_info_home.aspx';
 
-const EXPECTED_HEADER_KEYWORDS = [
-  'bank',
-  'state',
-  'district',
-  'reserve',
-  'emd',
-  'auction',
-  'property',
-];
+// Confirmed against a real debug dump (2026-07-14) of sale_info_home.aspx.
+const SEL = {
+  propertyType: '#DropDownList_Property_Type',
+  state: '#DropDownList_State',
+  district: '#DropDownList_District',
+  bank: '#DropDownList_Bank',
+  termsCheckbox: '#chk_term',
+  auctionDateAll: '#radio_all',
+  searchButton: '#Button_search',
+  resultsTable: '#tbl_search',
+};
 
-// Best-effort field names based on IBAPI's public description (state,
-// district, bank, property type filters). Unverified against the live DOM
-// because this environment's outbound network is currently blocked — run
-// with --debug on first use and share debug/*.selects.json if these don't
-// match, so the label strings below can be corrected.
 async function scrape(page, filters, opts) {
   await page.goto(URL, { waitUntil: 'domcontentloaded', timeout: 30000 });
-
   if (opts.debug) await dumpDebug(page, opts.debugDir, 'ibapi-loaded');
 
-  const applied = {};
-  applied.state = await trySelectByLabel(page, 'State', filters.state);
-  applied.district = await trySelectByLabel(page, 'District', filters.district);
-  applied.bank = await trySelectByLabel(page, 'Bank', filters.bank);
-  applied.propertyType = await trySelectByLabel(page, 'Property Type', filters.propertyType);
+  // "Notified" vs "ALL" auction-date radio has no default selection;
+  // ALL is the broader net and matches this tool's on-demand discovery use.
+  await page.locator(SEL.auctionDateAll).check({ force: true }).catch(() => {});
 
-  for (const [field, ok] of Object.entries(applied)) {
-    if (filters[field] && !ok) {
-      console.warn(`[ibapi] could not apply filter "${field}=${filters[field]}" (selector not found)`);
+  await selectOptionContaining(page, SEL.propertyType, filters.propertyType);
+  const stateApplied = await selectOptionContaining(page, SEL.state, filters.state);
+
+  if (filters.district) {
+    if (!stateApplied) {
+      console.warn('[ibapi] --district given without a matching --state; district list only populates after a state is selected, so this filter is being skipped.');
+    } else {
+      // District dropdown is populated by an onchange AJAX call after state
+      // selection; selectOption already fires 'change', so just wait for
+      // more than the default "All Districts" option to show up.
+      await page.waitForFunction(
+        (sel) => document.querySelector(sel)?.options.length > 1,
+        SEL.district,
+        { timeout: 8000 }
+      ).catch(() => console.warn('[ibapi] district list never populated after selecting state — skipping district filter.'));
+      await selectOptionContaining(page, SEL.district, filters.district);
     }
   }
 
-  await acceptTermsIfPresent(page);
+  await selectOptionContaining(page, SEL.bank, filters.bank);
 
-  const searchButton = page.getByRole('button', { name: /search/i }).first();
-  if (await searchButton.count()) {
-    await searchButton.waitFor({ state: 'visible' });
-    await page.waitForFunction(
-      (el) => !el.disabled,
-      await searchButton.elementHandle(),
-      { timeout: 10000 }
-    ).catch(() => {
-      console.warn('[ibapi] Search button never became enabled — Terms & Conditions checkbox may not have been found/checked.');
-    });
-    await Promise.all([
-      page.waitForLoadState('networkidle').catch(() => {}),
-      searchButton.click(),
-    ]);
-  }
+  const checked = await page.locator(SEL.termsCheckbox).isChecked().catch(() => false);
+  if (!checked) await page.locator(SEL.termsCheckbox).check({ force: true });
+
+  const searchButton = page.locator(SEL.searchButton);
+  await page.waitForFunction(
+    (sel) => !document.querySelector(sel)?.disabled,
+    SEL.searchButton,
+    { timeout: 10000 }
+  ).catch(() => console.warn('[ibapi] Search button never became enabled.'));
+  await searchButton.click();
+
+  // Results load via an async call into the #tbl_search DataTable; wait for
+  // the "Showing X to Y of Z entries" summary to move off the initial zero
+  // state, or for the empty-table placeholder, whichever comes first.
+  await page.waitForFunction(
+    () => {
+      const info = document.querySelector('#tbl_search_info')?.textContent || '';
+      return !/Showing 0 to 0 of 0/.test(info);
+    },
+    { timeout: 15000 }
+  ).catch(() => console.warn('[ibapi] results summary never updated — table may still be empty or the AJAX call is slower than expected.'));
 
   if (opts.debug) await dumpDebug(page, opts.debugDir, 'ibapi-results');
 
-  const rows = await scrapeKeyedTable(page, EXPECTED_HEADER_KEYWORDS);
-
+  const rows = await scrapeTableBySelector(page, SEL.resultsTable);
   return rows.map(normalizeRow).filter((r) => withinValueRange(r, filters));
 }
 
-// The Search button is disabled until a "Terms & Conditions" checkbox is
-// ticked (confirmed from a real run's tooltip text: "Please accept Terms &
-// Conditions. Click Checkbox"). Prefer a checkbox near "terms" text; if the
-// page only has one checkbox at all, that's almost certainly it.
-async function acceptTermsIfPresent(page) {
-  const checkboxes = await page.locator('input[type="checkbox"]').all();
-  if (checkboxes.length === 0) return false;
-
-  for (const cb of checkboxes) {
-    const nearbyText = await cb
-      .evaluate((el) => el.closest('tr, td, div, li, label')?.textContent?.trim().slice(0, 200))
-      .catch(() => '');
-    if (nearbyText && /terms/i.test(nearbyText)) {
-      await cb.check({ force: true });
-      return true;
-    }
+async function selectOptionContaining(page, selector, value) {
+  if (!value) return false;
+  const locator = page.locator(selector);
+  if (!(await locator.count())) return false;
+  const options = await locator.locator('option').allTextContents();
+  const match = options.find((o) => o.toLowerCase().includes(value.toLowerCase()));
+  if (!match) {
+    console.warn(`[ibapi] no option matching "${value}" in ${selector}`);
+    return false;
   }
-
-  if (checkboxes.length === 1) {
-    await checkboxes[0].check({ force: true });
-    return true;
-  }
-
-  console.warn('[ibapi] found multiple checkboxes but none mention "terms" — could not confidently pick one.');
-  return false;
+  await locator.selectOption({ label: match });
+  return true;
 }
 
+// Real headers confirmed from a debug dump: "Property ID", "Bank Name",
+// "Property", "Reserve Price (Rs)", "EMD (Rs)", "EMD Last Date & Time",
+// "Auction Start Date & Time", "Auction End Date & Time", "State",
+// "District", "City". Matched case-insensitively but exactly (not by
+// substring) since e.g. "Property ID" and "Property" would otherwise
+// collide on a naive .includes('property') check.
 function normalizeRow(raw) {
-  const findValue = (keyword) => {
-    const key = Object.keys(raw).find((k) => k.toLowerCase().includes(keyword));
+  const findExact = (headerName) => {
+    const key = Object.keys(raw).find((k) => k.trim().toLowerCase() === headerName.toLowerCase());
     return key ? raw[key] : '';
   };
 
-  const reserveText = findValue('reserve');
-  const reservePrice = parseIndianCurrency(reserveText);
-
+  const reserveText = findExact('Reserve Price (Rs)');
   return {
     source: 'ibapi',
-    bank: findValue('bank'),
-    state: findValue('state'),
-    district: findValue('district'),
-    propertyType: findValue('property') || findValue('asset'),
-    description: findValue('description') || findValue('description'),
+    propertyId: findExact('Property ID'),
+    bank: findExact('Bank Name'),
+    description: findExact('Property'),
     reservePriceRaw: reserveText,
-    reservePrice,
-    emd: findValue('emd'),
-    auctionDate: findValue('auction date') || findValue('date'),
+    reservePrice: parseIndianCurrency(reserveText),
+    emd: findExact('EMD (Rs)'),
+    emdLastDate: findExact('EMD Last Date & Time'),
+    auctionStart: findExact('Auction Start Date & Time'),
+    auctionEnd: findExact('Auction End Date & Time'),
+    state: findExact('State'),
+    district: findExact('District'),
+    city: findExact('City'),
     raw,
   };
 }
