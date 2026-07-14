@@ -5,6 +5,7 @@ const { withBrowser } = require('./browser');
 const SITES = {
   ibapi: require('./sites/ibapi'),
   ibbi: require('./sites/ibbi'),
+  mstc: require('./sites/mstc'),
 };
 
 function parseArgs(argv) {
@@ -31,6 +32,7 @@ async function main() {
     district: args.district || null,
     bank: args.bank || null,
     propertyType: args.propertyType || null,
+    location: args.location || null,
     minReserve: args.minReserve ? Number(args.minReserve) : null,
     maxReserve: args.maxReserve ? Number(args.maxReserve) : null,
     maxPages: args.maxPages ? Number(args.maxPages) : null,
@@ -59,6 +61,9 @@ async function main() {
 function summarizeListing(l) {
   if (l.source === 'ibbi') {
     return `${l.title || '(untitled notice)'} — ${l.pdfUrl}`;
+  }
+  if (l.source === 'mstc') {
+    return `[Lot ${l.lotNo || '?'}] ${l.description || '(no description)'} — ₹${l.reservePrice ?? l.reservePriceRaw} — ${l.location}`;
   }
   return `[${l.bank || '?'}] ${l.description || l.propertyType || '(no description)'} — ₹${l.reservePrice ?? l.reservePriceRaw} — ${l.auctionDate}`;
 }

@@ -14,6 +14,11 @@ Currently supports two sites:
   PDF's free text, which this tool deliberately does not regex-parse (too
   unreliable for numbers you'd act on financially). It surfaces notice
   titles + PDF links, and can download the PDFs for you to read.
+- **MSTC** (mstcecommerce.com) — Indian Customs seized/confiscated/unclaimed
+  cargo auctions (electronics, vehicles, misc imports) plus PSU surplus.
+  This is the **least verified** of the three adapters — research only
+  confirmed the entry URL, not the actual filter/table field names, so
+  expect the first `--debug` run to need real fix-up.
 
 ## ⚠️ First run will likely need one fix-up round
 
@@ -39,13 +44,15 @@ npx playwright install chromium   # downloads a browser Playwright can drive
 ```
 npm run scrape -- --site=ibapi --state=Maharashtra --minReserve=500000 --maxReserve=5000000 --debug
 npm run scrape -- --site=ibbi --maxPages=5 --downloadPdfs --debug
+npm run scrape -- --site=mstc --location=Mumbai --minReserve=1000 --debug
 ```
 
 Flags (all optional):
 - `--site` — which adapter to use (default `ibapi`; also `ibbi`)
 - `--state`, `--district`, `--bank`, `--propertyType` — IBAPI-only search
   filters, applied if a matching dropdown is found
-- `--minReserve`, `--maxReserve` — IBAPI-only post-filter on parsed reserve
+- `--location` — MSTC-only, custom house/city filter
+- `--minReserve`, `--maxReserve` — IBAPI/MSTC post-filter on parsed reserve
   price (₹)
 - `--maxPages` — IBBI-only, how many list pages to walk (default 3)
 - `--downloadPdfs` — IBBI-only, download each notice PDF into
