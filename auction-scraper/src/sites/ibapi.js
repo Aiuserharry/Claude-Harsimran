@@ -34,8 +34,18 @@ async function scrape(page, filters, opts) {
     }
   }
 
+  await acceptTermsIfPresent(page);
+
   const searchButton = page.getByRole('button', { name: /search/i }).first();
   if (await searchButton.count()) {
+    await searchButton.waitFor({ state: 'visible' });
+    await page.waitForFunction(
+      (el) => !el.disabled,
+      await searchButton.elementHandle(),
+      { timeout: 10000 }
+    ).catch(() => {
+      console.warn('[ibapi] Search button never became enabled — Terms & Conditions checkbox may not have been found/checked.');
+    });
     await Promise.all([
       page.waitForLoadState('networkidle').catch(() => {}),
       searchButton.click(),
@@ -47,6 +57,33 @@ async function scrape(page, filters, opts) {
   const rows = await scrapeKeyedTable(page, EXPECTED_HEADER_KEYWORDS);
 
   return rows.map(normalizeRow).filter((r) => withinValueRange(r, filters));
+}
+
+// The Search button is disabled until a "Terms & Conditions" checkbox is
+// ticked (confirmed from a real run's tooltip text: "Please accept Terms &
+// Conditions. Click Checkbox"). Prefer a checkbox near "terms" text; if the
+// page only has one checkbox at all, that's almost certainly it.
+async function acceptTermsIfPresent(page) {
+  const checkboxes = await page.locator('input[type="checkbox"]').all();
+  if (checkboxes.length === 0) return false;
+
+  for (const cb of checkboxes) {
+    const nearbyText = await cb
+      .evaluate((el) => el.closest('tr, td, div, li, label')?.textContent?.trim().slice(0, 200))
+      .catch(() => '');
+    if (nearbyText && /terms/i.test(nearbyText)) {
+      await cb.check({ force: true });
+      return true;
+    }
+  }
+
+  if (checkboxes.length === 1) {
+    await checkboxes[0].check({ force: true });
+    return true;
+  }
+
+  console.warn('[ibapi] found multiple checkboxes but none mention "terms" — could not confidently pick one.');
+  return false;
 }
 
 function normalizeRow(raw) {
