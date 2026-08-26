@@ -94,10 +94,7 @@
     font-family:inherit;
   }
   .level-btn:active{transform:translateY(4px);box-shadow:0 2px 0 rgba(0,0,0,0.15);}
-  .level-1{background:linear-gradient(135deg,var(--green),#1fae6f);}
-  .level-2{background:linear-gradient(135deg,var(--purple),#5738c9);}
-  .level-3{background:linear-gradient(135deg,var(--orange),#e6712a);}
-  .level-4{background:linear-gradient(135deg,var(--pink),#c94574);}
+  .level-primary{background:linear-gradient(135deg,var(--pink),#c94574);}
   .level-btn .stars-earned{font-size:15px;font-weight:normal;opacity:.95;}
 
   .progress-btn{
@@ -454,42 +451,7 @@
   "use strict";
 
   // ---------- Word data ----------
-  var LEVELS = {
-    1: {
-      name: "Easy Words",
-      color: "level-1",
-      words: [
-        {w:"cat", e:"🐱"}, {w:"dog", e:"🐶"}, {w:"sun", e:"☀️"}, {w:"hat", e:"🎩"},
-        {w:"bed", e:"🛏️"}, {w:"pig", e:"🐷"}, {w:"cup", e:"☕"}, {w:"box", e:"📦"},
-        {w:"map", e:"🗺️"}, {w:"bus", e:"🚌"}, {w:"hen", e:"🐔"}, {w:"cow", e:"🐮"},
-        {w:"fox", e:"🦊"}, {w:"bee", e:"🐝"}, {w:"egg", e:"🥚"}, {w:"ant", e:"🐜"},
-        {w:"bat", e:"🦇"}, {w:"owl", e:"🦉"}, {w:"ice", e:"🧊"}, {w:"ear", e:"👂"}
-      ]
-    },
-    2: {
-      name: "Sight Words",
-      color: "level-2",
-      words: [
-        {w:"the", e:""}, {w:"and", e:""}, {w:"was", e:""}, {w:"you", e:""},
-        {w:"they", e:""}, {w:"have", e:""}, {w:"like", e:""}, {w:"come", e:""},
-        {w:"some", e:""}, {w:"said", e:""}, {w:"one", e:""}, {w:"two", e:""},
-        {w:"are", e:""}, {w:"this", e:""}, {w:"what", e:""}, {w:"when", e:""},
-        {w:"then", e:""}, {w:"look", e:""}, {w:"want", e:""}, {w:"could", e:""}
-      ]
-    },
-    3: {
-      name: "Bigger Words",
-      color: "level-3",
-      words: [
-        {w:"frog", e:"🐸"}, {w:"tree", e:"🌳"}, {w:"star", e:"⭐"}, {w:"moon", e:"🌙"},
-        {w:"book", e:"📖"}, {w:"fish", e:"🐟"}, {w:"milk", e:"🥛"}, {w:"cake", e:"🎂"},
-        {w:"bird", e:"🐦"}, {w:"rain", e:"🌧️"}, {w:"snow", e:"❄️"}, {w:"lion", e:"🦁"},
-        {w:"duck", e:"🦆"}, {w:"king", e:"👑"}, {w:"kite", e:"🪁"}, {w:"corn", e:"🌽"},
-        {w:"leaf", e:"🍁"}, {w:"ship", e:"🚢"}, {w:"farm", e:"🚜"}, {w:"park", e:"🏞️"}
-      ]
-    }
-  };
-
+  var LEVELS = {};
   var CUSTOM_LEVEL_ID = "custom";
   var MIN_WORD_LEN = 2;
   var MAX_WORD_LEN = 15;
@@ -545,15 +507,75 @@
   }
 
   // ---------- Speech ----------
-  function speak(text, rate){
+  var FEMALE_VOICE_HINTS = [
+    "female","samantha","victoria","karen","moira","tessa","fiona","zira","hazel",
+    "susan","kate","serena","allison","ava","emma","joanna","salli","kendra","kimberly","google us english"
+  ];
+  var preferredVoice = null;
+  function pickFemaleVoice(){
+    if(!("speechSynthesis" in window)) return null;
+    var voices = window.speechSynthesis.getVoices();
+    if(!voices || !voices.length) return null;
+    var englishVoices = voices.filter(function(v){ return /^en/i.test(v.lang); });
+    var pool = englishVoices.length ? englishVoices : voices;
+    for(var i=0;i<pool.length;i++){
+      var name = pool[i].name.toLowerCase();
+      for(var j=0;j<FEMALE_VOICE_HINTS.length;j++){
+        if(name.indexOf(FEMALE_VOICE_HINTS[j]) !== -1) return pool[i];
+      }
+    }
+    return pool[0];
+  }
+  if("speechSynthesis" in window){
+    preferredVoice = pickFemaleVoice();
+    window.speechSynthesis.addEventListener("voiceschanged", function(){
+      preferredVoice = pickFemaleVoice();
+    });
+  }
+
+  function queueSpeech(text, rate){
     if(!("speechSynthesis" in window)) return;
     try{
-      window.speechSynthesis.cancel();
       var u = new SpeechSynthesisUtterance(text);
-      u.rate = rate || 0.85;
-      u.pitch = 1.1;
+      u.rate = rate;
+      u.pitch = 1.0;
+      if(preferredVoice) u.voice = preferredVoice;
       window.speechSynthesis.speak(u);
     }catch(e){}
+  }
+  // Short phrases and celebrations, spoken at a natural pace.
+  function speak(text, rate){
+    if(!("speechSynthesis" in window)) return;
+    try{ window.speechSynthesis.cancel(); }catch(e){}
+    queueSpeech(text, rate || 0.95);
+  }
+  // The word itself, spoken slower and clearly so it's easy to make out.
+  function announceWord(word){
+    if(!("speechSynthesis" in window)) return;
+    try{ window.speechSynthesis.cancel(); }catch(e){}
+    queueSpeech(word, 0.72);
+  }
+  // A short lead-in phrase followed by the word, spoken clearly.
+  function announcePhraseThenWord(phrase, word){
+    if(!("speechSynthesis" in window)) return;
+    try{ window.speechSynthesis.cancel(); }catch(e){}
+    queueSpeech(phrase, 0.95);
+    queueSpeech(word, 0.72);
+  }
+
+  // ---------- Celebrations ----------
+  var CELEBRATIONS = [
+    {emoji:"🍬", text:"Sweet! You got it!"},
+    {emoji:"🍭", text:"Yummy, a candy for you!"},
+    {emoji:"🍫", text:"Delicious! Well done!"},
+    {emoji:"🙌", text:"High five!"},
+    {emoji:"👏", text:"Great job!"},
+    {emoji:"🌟", text:"Superstar!"},
+    {emoji:"🥳", text:"Woohoo, you did it!"},
+    {emoji:"🎉", text:"Awesome work!"}
+  ];
+  function pickCelebration(){
+    return CELEBRATIONS[Math.floor(Math.random()*CELEBRATIONS.length)];
   }
 
   // ---------- App state ----------
@@ -573,21 +595,13 @@
   function showHome(){
     current = null;
     renderTotalStars();
-    var html = '';
-    html += '<h1>Let\'s Practice Spelling!</h1>';
-    html += '<p class="sub">Pick a word list to start</p>';
-    html += '<div class="levels">';
-    [1,2,3].forEach(function(id){
-      var lvl = LEVELS[id];
-      var earned = levelStarCount(id);
-      html += '<button class="level-btn '+lvl.color+'" data-level="'+id+'">' +
-        '<span>'+lvl.name+'</span>' +
-        '<span class="stars-earned">🌟 '+earned+' / '+lvl.words.length+'</span>' +
-        '</button>';
-    });
     var customLvl = LEVELS[CUSTOM_LEVEL_ID];
     var customCount = customLvl.words.length;
-    html += '<button class="level-btn level-4" id="customLevelBtn">' +
+    var html = '';
+    html += '<h1>Let\'s Practice Spelling!</h1>';
+    html += '<p class="sub">'+(customCount ? ('You have '+customCount+' word'+(customCount===1?'':'s')+' ready to practice.') : 'Add your own words to get started.')+'</p>';
+    html += '<div class="levels">';
+    html += '<button class="level-btn level-primary" id="customLevelBtn">' +
       '<span>✏️ '+customLvl.name+'</span>' +
       '<span class="stars-earned">'+(customCount ? (customCount+' word'+(customCount===1?'':'s')) : 'Add your own words')+'</span>' +
       '</button>';
@@ -595,12 +609,6 @@
     html += '<button class="progress-btn" id="progressBtn">See my progress</button>';
     app.innerHTML = html;
 
-    var btns = app.querySelectorAll(".level-btn[data-level]");
-    btns.forEach(function(b){
-      b.addEventListener("click", function(){
-        showModeSelect(parseInt(b.getAttribute("data-level"),10));
-      });
-    });
     document.getElementById("customLevelBtn").addEventListener("click", showCustomEditor);
     document.getElementById("progressBtn").addEventListener("click", showProgress);
   }
@@ -609,17 +617,10 @@
   function showProgress(){
     var html = '<div class="game-header"><button class="back-btn" id="backHome">⬅ Back</button><span></span></div>';
     html += '<h1>My Progress</h1>';
+    var customLvl = LEVELS[CUSTOM_LEVEL_ID];
+    var customEarned = levelStarCount(CUSTOM_LEVEL_ID);
     html += '<div class="progress-list">';
-    [1,2,3].forEach(function(id){
-      var lvl = LEVELS[id];
-      var earned = levelStarCount(id);
-      html += '<div class="progress-row"><span>'+lvl.name+'</span><span>🌟 '+earned+' / '+lvl.words.length+'</span></div>';
-    });
-    if(LEVELS[CUSTOM_LEVEL_ID].words.length > 0){
-      var customLvl = LEVELS[CUSTOM_LEVEL_ID];
-      var customEarned = levelStarCount(CUSTOM_LEVEL_ID);
-      html += '<div class="progress-row"><span>'+customLvl.name+'</span><span>🌟 '+customEarned+' / '+customLvl.words.length+'</span></div>';
-    }
+    html += '<div class="progress-row"><span>'+customLvl.name+'</span><span>🌟 '+customEarned+' / '+customLvl.words.length+'</span></div>';
     html += '</div>';
     var badge = "Keep going, you're learning!";
     if(progress.stars >= 60) badge = "🏆 Spelling Champion!";
@@ -779,7 +780,7 @@
     app.style.setProperty("--tile-size", tileSize + "px");
     document.getElementById("backHome").addEventListener("click", showHome);
     document.getElementById("listenBtn").addEventListener("click", function(){
-      speak(item.w);
+      announceWord(item.w);
     });
     document.getElementById("nextBtn").addEventListener("click", function(){
       current.index++;
@@ -790,7 +791,7 @@
     renderTilePool();
 
     // greet with the word once tiles are ready
-    setTimeout(function(){ speak(item.w); }, 300);
+    setTimeout(function(){ announceWord(item.w); }, 300);
   }
 
   function renderAnswerRow(len){
@@ -866,9 +867,10 @@
         saveProgress(progress);
         renderTotalStars();
       }
-      msgEl.textContent = current.mistakesThisWord === 0 ? "🎉 Perfect!" : "🎉 You got it!";
+      var celebration = pickCelebration();
+      msgEl.textContent = celebration.emoji + " " + celebration.text;
       msgEl.className = "message good";
-      speak(current.mistakesThisWord === 0 ? "Perfect! Great job!" : "You got it!");
+      speak(celebration.text);
       launchConfetti();
       document.getElementById("nextBtn").classList.add("show");
       // disable tiles
@@ -957,7 +959,7 @@
 
     app.innerHTML = html;
     document.getElementById("backHome").addEventListener("click", showHome);
-    document.getElementById("listenBtn").addEventListener("click", function(){ speak(item.w); });
+    document.getElementById("listenBtn").addEventListener("click", function(){ announceWord(item.w); });
     document.getElementById("checkBtn").addEventListener("click", triggerCheck);
     document.getElementById("nextBtn").addEventListener("click", function(){
       current.index++;
@@ -974,7 +976,7 @@
     renderKeyboardGrid();
     updateTypedDisplay();
 
-    setTimeout(function(){ speak(item.w); }, 300);
+    setTimeout(function(){ announceWord(item.w); }, 300);
   }
 
   function updateKeyboardToggleLabel(){
@@ -1048,9 +1050,10 @@
         renderTotalStars();
       }
       current.sessionResults.push({word:item.w, passed:true, attempts:current.attempts});
-      msgEl.textContent = current.attempts === 1 ? "🎉 Perfect!" : "🎉 You got it!";
+      var celebration = pickCelebration();
+      msgEl.textContent = celebration.emoji + " " + celebration.text;
       msgEl.className = "message good";
-      speak(current.attempts === 1 ? "Perfect! Great job!" : "You got it!");
+      speak(celebration.text);
       launchConfetti();
       lockTestWord();
     } else if(current.attempts >= 2){
@@ -1058,7 +1061,7 @@
       var reveal = item.e ? (item.e + " ") : "";
       msgEl.textContent = "The word was: " + reveal + item.w.toUpperCase();
       msgEl.className = "message bad";
-      speak("The word is " + item.w);
+      announcePhraseThenWord("The word is", item.w);
       lockTestWord();
     } else {
       msgEl.textContent = "Not quite, try again!";
@@ -1120,7 +1123,7 @@
   }
 
   // ---------- Confetti ----------
-  var CONFETTI_EMOJI = ["🎉","⭐","✨","🌟","🎊"];
+  var CONFETTI_EMOJI = ["🍬","🍭","🍫","🙌","👏","🌟","🎉","🥳"];
   function launchConfetti(){
     for(var i=0;i<18;i++){
       (function(i){
