@@ -97,6 +97,7 @@
   .level-1{background:linear-gradient(135deg,var(--green),#1fae6f);}
   .level-2{background:linear-gradient(135deg,var(--purple),#5738c9);}
   .level-3{background:linear-gradient(135deg,var(--orange),#e6712a);}
+  .level-4{background:linear-gradient(135deg,var(--pink),#c94574);}
   .level-btn .stars-earned{font-size:15px;font-weight:normal;opacity:.95;}
 
   .progress-btn{
@@ -167,15 +168,15 @@
     margin-bottom:20px;
   }
   .slot{
-    width:52px;
-    height:56px;
+    width:var(--tile-size,52px);
+    height:calc(var(--tile-size,52px) + 4px);
     border-bottom:5px solid #ccc;
     border-radius:8px 8px 0 0;
     background:#f7f7fb;
     display:flex;
     align-items:center;
     justify-content:center;
-    font-size:30px;
+    font-size:calc(var(--tile-size,52px) * 0.55);
     font-weight:bold;
     cursor:pointer;
     color:var(--ink);
@@ -186,18 +187,18 @@
   .tile-pool{
     display:flex;
     justify-content:center;
-    gap:10px;
+    gap:8px;
     flex-wrap:wrap;
     margin-bottom:10px;
     min-height:64px;
   }
   .tile{
-    width:52px;
-    height:56px;
+    width:var(--tile-size,52px);
+    height:calc(var(--tile-size,52px) + 4px);
     border:none;
     border-radius:12px;
     background:var(--yellow);
-    font-size:26px;
+    font-size:calc(var(--tile-size,52px) * 0.5);
     font-weight:bold;
     color:var(--ink);
     cursor:pointer;
@@ -253,6 +254,171 @@
   @keyframes fall{
     to{transform:translateY(110vh) rotate(360deg);opacity:0.4;}
   }
+
+  /* Mode select */
+  .mode-btn{
+    display:block;
+    width:100%;
+    border:none;
+    border-radius:20px;
+    padding:22px;
+    font-size:20px;
+    font-weight:bold;
+    color:#fff;
+    cursor:pointer;
+    box-shadow:0 6px 0 rgba(0,0,0,0.15);
+    font-family:inherit;
+    margin-bottom:16px;
+    text-align:left;
+  }
+  .mode-btn:active{transform:translateY(4px);box-shadow:0 2px 0 rgba(0,0,0,0.15);}
+  .mode-btn .mode-desc{display:block;font-size:14px;font-weight:normal;opacity:.9;margin-top:4px;}
+  .mode-practice{background:linear-gradient(135deg,var(--blue),#1b8bc9);}
+  .mode-test{background:linear-gradient(135deg,var(--purple),#5738c9);}
+
+  /* Dictation (test) mode */
+  .typed-display{
+    min-height:60px;
+    border-bottom:5px solid var(--purple);
+    border-radius:8px;
+    background:#f7f7fb;
+    font-size:32px;
+    font-weight:bold;
+    letter-spacing:6px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:6px 14px;
+    margin-bottom:16px;
+    color:var(--ink);
+    word-break:break-all;
+  }
+  .typed-display.placeholder{
+    color:#aaa;
+    font-size:16px;
+    font-weight:normal;
+    letter-spacing:normal;
+  }
+  .keyboard-toggle{
+    background:none;
+    border:2px solid #ddd;
+    border-radius:999px;
+    padding:6px 14px;
+    font-size:13px;
+    color:#777;
+    cursor:pointer;
+    font-family:inherit;
+    margin-bottom:14px;
+  }
+  .keyboard-grid{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:center;
+    gap:6px;
+    margin-bottom:16px;
+  }
+  .key-tile{
+    width:38px;
+    height:42px;
+    border:none;
+    border-radius:10px;
+    background:var(--yellow);
+    font-size:18px;
+    font-weight:bold;
+    color:var(--ink);
+    cursor:pointer;
+    box-shadow:0 3px 0 #d9ac1f;
+    font-family:inherit;
+  }
+  .key-tile:active{transform:translateY(2px);box-shadow:0 1px 0 #d9ac1f;}
+  .key-tile:disabled{opacity:.5;cursor:default;}
+  .key-wide{width:auto;padding:0 16px;}
+  .key-backspace{background:#eee;box-shadow:0 3px 0 #ccc;}
+  .check-btn{
+    background:var(--green);
+    color:#fff;
+    border:none;
+    border-radius:999px;
+    padding:14px 30px;
+    font-size:20px;
+    font-weight:bold;
+    cursor:pointer;
+    box-shadow:0 5px 0 #1fae6f;
+    font-family:inherit;
+    margin-bottom:16px;
+  }
+  .check-btn:active{transform:translateY(3px);box-shadow:0 2px 0 #1fae6f;}
+  .check-btn:disabled{opacity:.5;cursor:default;}
+  .results-list{text-align:left;margin:14px 0;}
+  .results-row{
+    display:flex;
+    justify-content:space-between;
+    padding:8px 4px;
+    border-bottom:1px solid #eee;
+    font-size:16px;
+  }
+
+  .word-form{
+    display:flex;
+    gap:8px;
+    margin-bottom:16px;
+  }
+  .word-input{
+    flex:1;
+    min-width:0;
+    padding:12px 14px;
+    font-size:18px;
+    border:2px solid #ddd;
+    border-radius:12px;
+    font-family:inherit;
+  }
+  .add-btn{
+    background:var(--green);
+    color:#fff;
+    border:none;
+    border-radius:12px;
+    padding:0 20px;
+    font-size:18px;
+    font-weight:bold;
+    cursor:pointer;
+    font-family:inherit;
+  }
+  .form-error{
+    color:#e6522a;
+    font-size:14px;
+    min-height:20px;
+    margin:-10px 0 12px;
+    text-align:left;
+  }
+  .word-chips{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    justify-content:center;
+    margin-bottom:20px;
+    min-height:40px;
+  }
+  .word-chip{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    background:#f2f2f2;
+    border-radius:999px;
+    padding:8px 8px 8px 16px;
+    font-size:16px;
+    font-weight:bold;
+  }
+  .word-chip button{
+    background:#ddd;
+    border:none;
+    border-radius:50%;
+    width:22px;
+    height:22px;
+    cursor:pointer;
+    font-size:13px;
+    line-height:1;
+  }
+  .empty-hint{color:#999;font-size:15px;}
 
   .progress-list{text-align:left;margin-top:10px;}
   .progress-row{
@@ -324,6 +490,34 @@
     }
   };
 
+  var CUSTOM_LEVEL_ID = "custom";
+  var MIN_WORD_LEN = 2;
+  var MAX_WORD_LEN = 15;
+
+  // ---------- Custom word list (localStorage) ----------
+  var CUSTOM_WORDS_KEY = "spellingStarsCustomWords";
+  function loadCustomWords(){
+    try{
+      var raw = localStorage.getItem(CUSTOM_WORDS_KEY);
+      if(raw) return JSON.parse(raw);
+    }catch(e){}
+    return [];
+  }
+  function saveCustomWords(words){
+    try{ localStorage.setItem(CUSTOM_WORDS_KEY, JSON.stringify(words)); }catch(e){}
+  }
+  var customWords = loadCustomWords();
+
+  function refreshCustomLevel(){
+    LEVELS[CUSTOM_LEVEL_ID] = {
+      name: "My Own Words",
+      color: "level-4",
+      icon: "✏️",
+      words: customWords.map(function(w){ return {w:w, e:""}; })
+    };
+  }
+  refreshCustomLevel();
+
   // ---------- Progress (localStorage) ----------
   var STORAGE_KEY = "spellingStarsProgress";
   function loadProgress(){
@@ -391,16 +585,23 @@
         '<span class="stars-earned">🌟 '+earned+' / '+lvl.words.length+'</span>' +
         '</button>';
     });
+    var customLvl = LEVELS[CUSTOM_LEVEL_ID];
+    var customCount = customLvl.words.length;
+    html += '<button class="level-btn level-4" id="customLevelBtn">' +
+      '<span>✏️ '+customLvl.name+'</span>' +
+      '<span class="stars-earned">'+(customCount ? (customCount+' word'+(customCount===1?'':'s')) : 'Add your own words')+'</span>' +
+      '</button>';
     html += '</div>';
     html += '<button class="progress-btn" id="progressBtn">See my progress</button>';
     app.innerHTML = html;
 
-    var btns = app.querySelectorAll(".level-btn");
+    var btns = app.querySelectorAll(".level-btn[data-level]");
     btns.forEach(function(b){
       b.addEventListener("click", function(){
-        startLevel(parseInt(b.getAttribute("data-level"),10));
+        showModeSelect(parseInt(b.getAttribute("data-level"),10));
       });
     });
+    document.getElementById("customLevelBtn").addEventListener("click", showCustomEditor);
     document.getElementById("progressBtn").addEventListener("click", showProgress);
   }
 
@@ -414,6 +615,11 @@
       var earned = levelStarCount(id);
       html += '<div class="progress-row"><span>'+lvl.name+'</span><span>🌟 '+earned+' / '+lvl.words.length+'</span></div>';
     });
+    if(LEVELS[CUSTOM_LEVEL_ID].words.length > 0){
+      var customLvl = LEVELS[CUSTOM_LEVEL_ID];
+      var customEarned = levelStarCount(CUSTOM_LEVEL_ID);
+      html += '<div class="progress-row"><span>'+customLvl.name+'</span><span>🌟 '+customEarned+' / '+customLvl.words.length+'</span></div>';
+    }
     html += '</div>';
     var badge = "Keep going, you're learning!";
     if(progress.stars >= 60) badge = "🏆 Spelling Champion!";
@@ -424,13 +630,110 @@
     document.getElementById("backHome").addEventListener("click", showHome);
   }
 
+  // ---------- Custom word editor ----------
+  function showCustomEditor(){
+    var html = '<div class="game-header"><button class="back-btn" id="backHome">⬅ Back</button><span></span></div>';
+    html += '<h1>My Own Words</h1>';
+    html += '<p class="sub">Add any word to practice &mdash; short or long (up to '+MAX_WORD_LEN+' letters)</p>';
+    html += '<div class="word-form">' +
+      '<input type="text" class="word-input" id="newWordInput" placeholder="Type a word, e.g. elephant" maxlength="'+MAX_WORD_LEN+'">' +
+      '<button class="add-btn" id="addWordBtn">Add</button>' +
+      '</div>';
+    html += '<div class="form-error" id="formError"></div>';
+    html += '<div class="word-chips" id="wordChips"></div>';
+    html += '<button class="listen-btn" id="continueBtn">🚀 Continue</button>';
+    app.innerHTML = html;
+
+    document.getElementById("backHome").addEventListener("click", showHome);
+    renderWordChips();
+
+    var input = document.getElementById("newWordInput");
+    var errorEl = document.getElementById("formError");
+
+    function tryAddWord(){
+      var raw = input.value.trim().toLowerCase();
+      errorEl.textContent = "";
+      if(!raw) return;
+      if(!/^[a-z]+$/.test(raw)){
+        errorEl.textContent = "Please use letters only (a-z).";
+        return;
+      }
+      if(raw.length < MIN_WORD_LEN || raw.length > MAX_WORD_LEN){
+        errorEl.textContent = "Words should be "+MIN_WORD_LEN+" to "+MAX_WORD_LEN+" letters long.";
+        return;
+      }
+      if(customWords.indexOf(raw) !== -1){
+        errorEl.textContent = "\""+raw+"\" is already on the list.";
+        return;
+      }
+      customWords.push(raw);
+      saveCustomWords(customWords);
+      refreshCustomLevel();
+      input.value = "";
+      renderWordChips();
+      input.focus();
+    }
+
+    document.getElementById("addWordBtn").addEventListener("click", tryAddWord);
+    input.addEventListener("keydown", function(ev){
+      if(ev.key === "Enter"){ ev.preventDefault(); tryAddWord(); }
+    });
+
+    document.getElementById("continueBtn").addEventListener("click", function(){
+      if(customWords.length === 0){
+        errorEl.textContent = "Add at least one word first!";
+        return;
+      }
+      showModeSelect(CUSTOM_LEVEL_ID);
+    });
+  }
+
+  function renderWordChips(){
+    var box = document.getElementById("wordChips");
+    if(customWords.length === 0){
+      box.innerHTML = '<span class="empty-hint">No words yet &mdash; add one above.</span>';
+      return;
+    }
+    var html = '';
+    customWords.forEach(function(w, i){
+      html += '<span class="word-chip">'+w+' <button data-idx="'+i+'" aria-label="Remove '+w+'">✕</button></span>';
+    });
+    box.innerHTML = html;
+    box.querySelectorAll("button").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        var idx = parseInt(btn.getAttribute("data-idx"),10);
+        customWords.splice(idx,1);
+        saveCustomWords(customWords);
+        refreshCustomLevel();
+        renderWordChips();
+      });
+    });
+  }
+
+  // ---------- Mode select ----------
+  function showModeSelect(levelId){
+    var lvl = LEVELS[levelId];
+    var html = '<div class="game-header"><button class="back-btn" id="backHome">⬅ Back</button><span></span></div>';
+    html += '<h1>'+lvl.name+'</h1>';
+    html += '<p class="sub">How do you want to practice?</p>';
+    html += '<button class="mode-btn mode-practice" id="practiceModeBtn">🧩 Practice' +
+      '<span class="mode-desc">See the letters and put them in order.</span></button>';
+    html += '<button class="mode-btn mode-test" id="testModeBtn">✍️ Test' +
+      '<span class="mode-desc">Just listen, then write the word yourself &mdash; no letters shown.</span></button>';
+    app.innerHTML = html;
+    document.getElementById("backHome").addEventListener("click", showHome);
+    document.getElementById("practiceModeBtn").addEventListener("click", function(){ startLevel(levelId, "practice"); });
+    document.getElementById("testModeBtn").addEventListener("click", function(){ startLevel(levelId, "test"); });
+  }
+
   // ---------- Game screen ----------
-  function startLevel(levelId){
+  function startLevel(levelId, mode){
     current = {
       levelId: levelId,
+      mode: mode,
       queue: shuffle(LEVELS[levelId].words),
       index: 0,
-      mistakesThisWord: 0
+      sessionResults: []
     };
     renderWord();
   }
@@ -442,6 +745,14 @@
       return;
     }
     var item = current.queue[current.index];
+    if(current.mode === "test"){
+      renderTestWord(item, lvl);
+    } else {
+      renderPracticeWord(item, lvl);
+    }
+  }
+
+  function renderPracticeWord(item, lvl){
     current.mistakesThisWord = 0;
     current.answer = [];
     current.letters = shuffle(item.w.split(""));
@@ -456,11 +767,7 @@
       '<button class="back-btn" id="backHome">⬅ Back</button>' +
       '<span class="progress-pill">'+(current.index+1)+' / '+current.queue.length+'</span>' +
       '</div>';
-    if(item.e){
-      html += '<div class="picture">'+item.e+'</div>';
-    } else {
-      html += '<div class="picture">📖</div>';
-    }
+    html += '<div class="picture">'+(item.e || lvl.icon || "📖")+'</div>';
     html += '<button class="listen-btn" id="listenBtn">🔊 Hear the word</button>';
     html += '<div class="answer-row" id="answerRow"></div>';
     html += '<div class="message" id="message"></div>';
@@ -468,6 +775,8 @@
     html += '<button class="next-btn" id="nextBtn">Next word ➡</button>';
 
     app.innerHTML = html;
+    var tileSize = item.w.length <= 6 ? 52 : item.w.length <= 8 ? 44 : item.w.length <= 10 ? 38 : 32;
+    app.style.setProperty("--tile-size", tileSize + "px");
     document.getElementById("backHome").addEventListener("click", showHome);
     document.getElementById("listenBtn").addEventListener("click", function(){
       speak(item.w);
@@ -599,22 +908,215 @@
     }
   }
 
-  function renderLevelComplete(){
-    var lvl = LEVELS[current.levelId];
-    var earned = levelStarCount(current.levelId);
+  // ---------- Dictation (test) mode ----------
+  var SHOW_KEYBOARD_KEY = "spellingStarsShowKeyboard";
+  function loadShowKeyboard(){
+    try{
+      var raw = localStorage.getItem(SHOW_KEYBOARD_KEY);
+      if(raw !== null) return raw === "1";
+    }catch(e){}
+    return true;
+  }
+  function saveShowKeyboard(val){
+    try{ localStorage.setItem(SHOW_KEYBOARD_KEY, val ? "1" : "0"); }catch(e){}
+  }
+  var showOnscreenKeyboard = loadShowKeyboard();
+
+  document.addEventListener("keydown", function(e){
+    if(!current || current.mode !== "test" || current.locked) return;
+    if(e.ctrlKey || e.metaKey || e.altKey) return;
+    if(/^[a-zA-Z]$/.test(e.key)){
+      appendLetter(e.key.toLowerCase());
+    } else if(e.key === "Backspace"){
+      e.preventDefault();
+      removeLetter();
+    } else if(e.key === "Enter"){
+      e.preventDefault();
+      triggerCheck();
+    }
+  });
+
+  function renderTestWord(item, lvl){
+    current.attempts = 0;
+    current.typed = "";
+    current.locked = false;
+
     var html = '';
-    html += '<div class="game-header"><button class="back-btn" id="backHome">⬅ Back</button><span></span></div>';
-    html += '<div class="picture">🏆</div>';
-    html += '<h1>You finished '+lvl.name+'!</h1>';
-    html += '<p class="sub">You earned 🌟 '+earned+' / '+lvl.words.length+' stars</p>';
-    html += '<button class="listen-btn" id="playAgain">🔁 Play again</button>';
+    html += '<div class="game-header">' +
+      '<button class="back-btn" id="backHome">⬅ Back</button>' +
+      '<span class="progress-pill">'+(current.index+1)+' / '+current.queue.length+'</span>' +
+      '</div>';
+    html += '<div class="picture">👂</div>';
+    html += '<button class="listen-btn" id="listenBtn">🔊 Hear the word</button>';
+    html += '<div class="typed-display placeholder" id="typedDisplay"></div>';
+    html += '<div class="message" id="message"></div>';
+    html += '<button class="keyboard-toggle" id="toggleKeyboardBtn"></button>';
+    html += '<div class="keyboard-grid" id="keyboardGrid"></div>';
+    html += '<button class="check-btn" id="checkBtn">✅ Check</button>';
+    html += '<button class="next-btn" id="nextBtn">Next word ➡</button>';
+
     app.innerHTML = html;
     document.getElementById("backHome").addEventListener("click", showHome);
-    document.getElementById("playAgain").addEventListener("click", function(){
-      startLevel(current.levelId);
+    document.getElementById("listenBtn").addEventListener("click", function(){ speak(item.w); });
+    document.getElementById("checkBtn").addEventListener("click", triggerCheck);
+    document.getElementById("nextBtn").addEventListener("click", function(){
+      current.index++;
+      renderWord();
     });
-    speak("Great job! You finished " + lvl.name);
-    launchConfetti();
+    document.getElementById("toggleKeyboardBtn").addEventListener("click", function(){
+      showOnscreenKeyboard = !showOnscreenKeyboard;
+      saveShowKeyboard(showOnscreenKeyboard);
+      renderKeyboardGrid();
+      updateKeyboardToggleLabel();
+    });
+
+    updateKeyboardToggleLabel();
+    renderKeyboardGrid();
+    updateTypedDisplay();
+
+    setTimeout(function(){ speak(item.w); }, 300);
+  }
+
+  function updateKeyboardToggleLabel(){
+    var btn = document.getElementById("toggleKeyboardBtn");
+    if(btn) btn.textContent = showOnscreenKeyboard ? "🙈 Hide on-screen keyboard" : "⌨️ Show on-screen keyboard (use your own)";
+  }
+
+  function renderKeyboardGrid(){
+    var grid = document.getElementById("keyboardGrid");
+    if(!grid) return;
+    if(!showOnscreenKeyboard){
+      grid.innerHTML = "";
+      return;
+    }
+    var html = "";
+    "abcdefghijklmnopqrstuvwxyz".split("").forEach(function(ch){
+      html += '<button class="key-tile" data-letter="'+ch+'">'+ch.toUpperCase()+'</button>';
+    });
+    html += '<button class="key-tile key-wide key-backspace" id="backspaceKey">⌫</button>';
+    grid.innerHTML = html;
+    grid.querySelectorAll(".key-tile[data-letter]").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        appendLetter(btn.getAttribute("data-letter"));
+      });
+    });
+    document.getElementById("backspaceKey").addEventListener("click", removeLetter);
+  }
+
+  function appendLetter(ch){
+    if(!current || current.mode !== "test" || current.locked) return;
+    if(current.typed.length >= 20) return;
+    current.typed += ch;
+    updateTypedDisplay();
+  }
+
+  function removeLetter(){
+    if(!current || current.mode !== "test" || current.locked) return;
+    current.typed = current.typed.slice(0,-1);
+    updateTypedDisplay();
+  }
+
+  function updateTypedDisplay(){
+    var el = document.getElementById("typedDisplay");
+    if(!el) return;
+    if(current.typed){
+      el.textContent = current.typed.toUpperCase();
+      el.classList.remove("placeholder");
+    } else {
+      el.textContent = "Listen, then write it here";
+      el.classList.add("placeholder");
+    }
+  }
+
+  function triggerCheck(){
+    if(!current || current.mode !== "test" || current.locked) return;
+    var item = current.queue[current.index];
+    var msgEl = document.getElementById("message");
+    var guess = current.typed.trim().toLowerCase();
+    if(!guess){
+      msgEl.textContent = "Write something first!";
+      msgEl.className = "message bad";
+      return;
+    }
+    current.attempts++;
+    if(guess === item.w){
+      var key = current.levelId+":"+item.w;
+      if(!progress.done[key]){
+        progress.done[key] = true;
+        progress.stars++;
+        saveProgress(progress);
+        renderTotalStars();
+      }
+      current.sessionResults.push({word:item.w, passed:true, attempts:current.attempts});
+      msgEl.textContent = current.attempts === 1 ? "🎉 Perfect!" : "🎉 You got it!";
+      msgEl.className = "message good";
+      speak(current.attempts === 1 ? "Perfect! Great job!" : "You got it!");
+      launchConfetti();
+      lockTestWord();
+    } else if(current.attempts >= 2){
+      current.sessionResults.push({word:item.w, passed:false, attempts:current.attempts});
+      var reveal = item.e ? (item.e + " ") : "";
+      msgEl.textContent = "The word was: " + reveal + item.w.toUpperCase();
+      msgEl.className = "message bad";
+      speak("The word is " + item.w);
+      lockTestWord();
+    } else {
+      msgEl.textContent = "Not quite, try again!";
+      msgEl.className = "message bad";
+      speak("Try again");
+      current.typed = "";
+      updateTypedDisplay();
+    }
+  }
+
+  function lockTestWord(){
+    current.locked = true;
+    document.getElementById("nextBtn").classList.add("show");
+    document.getElementById("checkBtn").disabled = true;
+    document.querySelectorAll(".key-tile").forEach(function(t){ t.disabled = true; });
+  }
+
+  function renderLevelComplete(){
+    var lvl = LEVELS[current.levelId];
+    var html = '';
+    html += '<div class="game-header"><button class="back-btn" id="backHome">⬅ Back</button><span></span></div>';
+
+    if(current.mode === "test"){
+      var results = current.sessionResults;
+      var correct = results.filter(function(r){ return r.passed; }).length;
+      var missed = results.filter(function(r){ return !r.passed; });
+      html += '<div class="picture">'+(missed.length === 0 ? '🏆' : '📝')+'</div>';
+      html += '<h1>Test finished!</h1>';
+      html += '<p class="sub">You spelled '+correct+' / '+results.length+' words correctly</p>';
+      if(missed.length){
+        html += '<div class="results-list"><div class="results-row"><strong>Words to practice more:</strong></div>';
+        missed.forEach(function(r){
+          html += '<div class="results-row"><span>'+r.word+'</span><span>✍️</span></div>';
+        });
+        html += '</div>';
+      }
+      html += '<button class="listen-btn" id="playAgain">🔁 Try again</button>';
+      app.innerHTML = html;
+      document.getElementById("backHome").addEventListener("click", showHome);
+      document.getElementById("playAgain").addEventListener("click", function(){
+        startLevel(current.levelId, current.mode);
+      });
+      speak(missed.length === 0 ? "Amazing! You got every word right!" : "Good try! You got " + correct + " out of " + results.length);
+      if(missed.length === 0) launchConfetti();
+    } else {
+      var earned = levelStarCount(current.levelId);
+      html += '<div class="picture">🏆</div>';
+      html += '<h1>You finished '+lvl.name+'!</h1>';
+      html += '<p class="sub">You earned 🌟 '+earned+' / '+lvl.words.length+' stars</p>';
+      html += '<button class="listen-btn" id="playAgain">🔁 Play again</button>';
+      app.innerHTML = html;
+      document.getElementById("backHome").addEventListener("click", showHome);
+      document.getElementById("playAgain").addEventListener("click", function(){
+        startLevel(current.levelId, current.mode);
+      });
+      speak("Great job! You finished " + lvl.name);
+      launchConfetti();
+    }
   }
 
   // ---------- Confetti ----------
