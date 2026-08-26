@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spelling Stars</title>
+<style>
+  :root{
+    --pink:#ff6b9d;
+    --purple:#7c5cff;
+    --blue:#3fb6ff;
+    --green:#38d68a;
+    --yellow:#ffcf3f;
+    --orange:#ff9a3f;
+    --ink:#2c2c4a;
+    --card:#ffffff;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;
+    height:100%;
+    font-family:"Comic Sans MS","Comic Neue",Verdana,"Trebuchet MS",sans-serif;
+    color:var(--ink);
+    background:linear-gradient(135deg,#a8e6ff,#ffd6ec);
+    overflow-x:hidden;
+  }
+  body{
+    min-height:100%;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:16px;
+  }
+  .topbar{
+    width:100%;
+    max-width:640px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:12px;
+  }
+  .brand{
+    font-size:26px;
+    font-weight:bold;
+    color:var(--purple);
+    text-shadow:1px 1px 0 #fff;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    cursor:pointer;
+    user-select:none;
+  }
+  .star-total{
+    background:var(--card);
+    border-radius:999px;
+    padding:8px 16px;
+    font-size:18px;
+    font-weight:bold;
+    box-shadow:0 4px 0 rgba(0,0,0,0.08);
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .card{
+    width:100%;
+    max-width:640px;
+    background:var(--card);
+    border-radius:28px;
+    box-shadow:0 10px 0 rgba(0,0,0,0.08);
+    padding:28px 22px;
+    text-align:center;
+  }
+  h1{margin:4px 0 6px;font-size:28px;}
+  p.sub{margin:0 0 20px;font-size:17px;color:#555;}
+
+  .levels{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:16px;
+  }
+  .level-btn{
+    border:none;
+    border-radius:20px;
+    padding:20px;
+    font-size:22px;
+    font-weight:bold;
+    color:#fff;
+    cursor:pointer;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    box-shadow:0 6px 0 rgba(0,0,0,0.15);
+    transition:transform .08s;
+    font-family:inherit;
+  }
+  .level-btn:active{transform:translateY(4px);box-shadow:0 2px 0 rgba(0,0,0,0.15);}
+  .level-1{background:linear-gradient(135deg,var(--green),#1fae6f);}
+  .level-2{background:linear-gradient(135deg,var(--purple),#5738c9);}
+  .level-3{background:linear-gradient(135deg,var(--orange),#e6712a);}
+  .level-btn .stars-earned{font-size:15px;font-weight:normal;opacity:.95;}
+
+  .progress-btn{
+    margin-top:18px;
+    background:none;
+    border:2px dashed #bbb;
+    border-radius:16px;
+    padding:10px 18px;
+    font-size:15px;
+    color:#777;
+    cursor:pointer;
+    font-family:inherit;
+  }
+
+  /* Game screen */
+  .game-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:10px;
+  }
+  .back-btn{
+    background:#eee;
+    border:none;
+    border-radius:12px;
+    padding:8px 14px;
+    font-size:16px;
+    cursor:pointer;
+    font-family:inherit;
+  }
+  .progress-pill{
+    background:#f2f2f2;
+    border-radius:999px;
+    padding:6px 14px;
+    font-size:14px;
+    font-weight:bold;
+  }
+
+  .picture{
+    font-size:80px;
+    line-height:1;
+    margin:10px 0;
+    animation:pop .3s ease;
+  }
+  @keyframes pop{from{transform:scale(0.5);opacity:0;}to{transform:scale(1);opacity:1;}}
+
+  .listen-btn{
+    background:var(--blue);
+    color:#fff;
+    border:none;
+    border-radius:999px;
+    padding:14px 26px;
+    font-size:20px;
+    font-weight:bold;
+    cursor:pointer;
+    box-shadow:0 5px 0 #1b8bc9;
+    margin:10px 0 22px;
+    font-family:inherit;
+  }
+  .listen-btn:active{transform:translateY(3px);box-shadow:0 2px 0 #1b8bc9;}
+
+  .answer-row{
+    display:flex;
+    justify-content:center;
+    gap:8px;
+    flex-wrap:wrap;
+    min-height:64px;
+    margin-bottom:20px;
+  }
+  .slot{
+    width:52px;
+    height:56px;
+    border-bottom:5px solid #ccc;
+    border-radius:8px 8px 0 0;
+    background:#f7f7fb;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:30px;
+    font-weight:bold;
+    cursor:pointer;
+    color:var(--ink);
+  }
+  .slot.filled{border-bottom-color:var(--purple);background:#efe9ff;}
+  .slot.empty{visibility:hidden;}
+
+  .tile-pool{
+    display:flex;
+    justify-content:center;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-bottom:10px;
+    min-height:64px;
+  }
+  .tile{
+    width:52px;
+    height:56px;
+    border:none;
+    border-radius:12px;
+    background:var(--yellow);
+    font-size:26px;
+    font-weight:bold;
+    color:var(--ink);
+    cursor:pointer;
+    box-shadow:0 4px 0 #d9ac1f;
+    font-family:inherit;
+  }
+  .tile:active{transform:translateY(3px);box-shadow:0 1px 0 #d9ac1f;}
+  .tile.hint{
+    animation:glow 0.9s infinite alternate;
+  }
+  @keyframes glow{from{box-shadow:0 4px 0 #d9ac1f;}to{box-shadow:0 4px 0 #d9ac1f,0 0 16px 6px #ffe58a;}}
+  .tile.hidden{visibility:hidden;pointer-events:none;}
+
+  .message{
+    min-height:34px;
+    font-size:20px;
+    font-weight:bold;
+    margin-bottom:6px;
+  }
+  .message.good{color:#1fae6f;}
+  .message.bad{color:#e6522a;}
+
+  .shake{animation:shake .4s;}
+  @keyframes shake{
+    10%,90%{transform:translateX(-4px);}
+    20%,80%{transform:translateX(6px);}
+    30%,50%,70%{transform:translateX(-10px);}
+    40%,60%{transform:translateX(10px);}
+  }
+
+  .next-btn{
+    background:var(--pink);
+    color:#fff;
+    border:none;
+    border-radius:999px;
+    padding:14px 30px;
+    font-size:20px;
+    font-weight:bold;
+    cursor:pointer;
+    box-shadow:0 5px 0 #c94574;
+    font-family:inherit;
+    display:none;
+  }
+  .next-btn.show{display:inline-block;}
+
+  .confetti{
+    position:fixed;
+    top:-20px;
+    font-size:26px;
+    animation:fall linear forwards;
+    pointer-events:none;
+  }
+  @keyframes fall{
+    to{transform:translateY(110vh) rotate(360deg);opacity:0.4;}
+  }
+
+  .progress-list{text-align:left;margin-top:10px;}
+  .progress-row{
+    display:flex;
+    justify-content:space-between;
+    padding:10px 4px;
+    border-bottom:1px solid #eee;
+    font-size:17px;
+  }
+  .badge{
+    margin-top:14px;
+    font-size:18px;
+    font-weight:bold;
+    color:var(--purple);
+  }
+
+  @media (min-width:480px){
+    .levels{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand" id="homeLink">⭐ Spelling Stars</div>
+  <div class="star-total">🌟 <span id="totalStars">0</span></div>
+</div>
+
+<div class="card" id="app"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- Word data ----------
+  var LEVELS = {
+    1: {
+      name: "Easy Words",
+      color: "level-1",
+      words: [
+        {w:"cat", e:"🐱"}, {w:"dog", e:"🐶"}, {w:"sun", e:"☀️"}, {w:"hat", e:"🎩"},
+        {w:"bed", e:"🛏️"}, {w:"pig", e:"🐷"}, {w:"cup", e:"☕"}, {w:"box", e:"📦"},
+        {w:"map", e:"🗺️"}, {w:"bus", e:"🚌"}, {w:"hen", e:"🐔"}, {w:"cow", e:"🐮"},
+        {w:"fox", e:"🦊"}, {w:"bee", e:"🐝"}, {w:"egg", e:"🥚"}, {w:"ant", e:"🐜"},
+        {w:"bat", e:"🦇"}, {w:"owl", e:"🦉"}, {w:"ice", e:"🧊"}, {w:"ear", e:"👂"}
+      ]
+    },
+    2: {
+      name: "Sight Words",
+      color: "level-2",
+      words: [
+        {w:"the", e:""}, {w:"and", e:""}, {w:"was", e:""}, {w:"you", e:""},
+        {w:"they", e:""}, {w:"have", e:""}, {w:"like", e:""}, {w:"come", e:""},
+        {w:"some", e:""}, {w:"said", e:""}, {w:"one", e:""}, {w:"two", e:""},
+        {w:"are", e:""}, {w:"this", e:""}, {w:"what", e:""}, {w:"when", e:""},
+        {w:"then", e:""}, {w:"look", e:""}, {w:"want", e:""}, {w:"could", e:""}
+      ]
+    },
+    3: {
+      name: "Bigger Words",
+      color: "level-3",
+      words: [
+        {w:"frog", e:"🐸"}, {w:"tree", e:"🌳"}, {w:"star", e:"⭐"}, {w:"moon", e:"🌙"},
+        {w:"book", e:"📖"}, {w:"fish", e:"🐟"}, {w:"milk", e:"🥛"}, {w:"cake", e:"🎂"},
+        {w:"bird", e:"🐦"}, {w:"rain", e:"🌧️"}, {w:"snow", e:"❄️"}, {w:"lion", e:"🦁"},
+        {w:"duck", e:"🦆"}, {w:"king", e:"👑"}, {w:"kite", e:"🪁"}, {w:"corn", e:"🌽"},
+        {w:"leaf", e:"🍁"}, {w:"ship", e:"🚢"}, {w:"farm", e:"🚜"}, {w:"park", e:"🏞️"}
+      ]
+    }
+  };
+
+  // ---------- Progress (localStorage) ----------
+  var STORAGE_KEY = "spellingStarsProgress";
+  function loadProgress(){
+    try{
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if(raw) return JSON.parse(raw);
+    }catch(e){}
+    return {stars:0, done:{}};
+  }
+  function saveProgress(p){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(p)); }catch(e){}
+  }
+  var progress = loadProgress();
+
+  function levelStarCount(levelId){
+    var words = LEVELS[levelId].words;
+    var count = 0;
+    for(var i=0;i<words.length;i++){
+      if(progress.done[levelId+":"+words[i].w]) count++;
+    }
+    return count;
+  }
+  function renderTotalStars(){
+    document.getElementById("totalStars").textContent = progress.stars;
+  }
+
+  // ---------- Speech ----------
+  function speak(text, rate){
+    if(!("speechSynthesis" in window)) return;
+    try{
+      window.speechSynthesis.cancel();
+      var u = new SpeechSynthesisUtterance(text);
+      u.rate = rate || 0.85;
+      u.pitch = 1.1;
+      window.speechSynthesis.speak(u);
+    }catch(e){}
+  }
+
+  // ---------- App state ----------
+  var app = document.getElementById("app");
+  var current = null; // {levelId, queue, index}
+
+  function shuffle(arr){
+    var a = arr.slice();
+    for(var i=a.length-1;i>0;i--){
+      var j = Math.floor(Math.random()*(i+1));
+      var t=a[i]; a[i]=a[j]; a[j]=t;
+    }
+    return a;
+  }
+
+  // ---------- Home screen ----------
+  function showHome(){
+    current = null;
+    renderTotalStars();
+    var html = '';
+    html += '<h1>Let\'s Practice Spelling!</h1>';
+    html += '<p class="sub">Pick a word list to start</p>';
+    html += '<div class="levels">';
+    [1,2,3].forEach(function(id){
+      var lvl = LEVELS[id];
+      var earned = levelStarCount(id);
+      html += '<button class="level-btn '+lvl.color+'" data-level="'+id+'">' +
+        '<span>'+lvl.name+'</span>' +
+        '<span class="stars-earned">🌟 '+earned+' / '+lvl.words.length+'</span>' +
+        '</button>';
+    });
+    html += '</div>';
+    html += '<button class="progress-btn" id="progressBtn">See my progress</button>';
+    app.innerHTML = html;
+
+    var btns = app.querySelectorAll(".level-btn");
+    btns.forEach(function(b){
+      b.addEventListener("click", function(){
+        startLevel(parseInt(b.getAttribute("data-level"),10));
+      });
+    });
+    document.getElementById("progressBtn").addEventListener("click", showProgress);
+  }
+
+  // ---------- Progress screen ----------
+  function showProgress(){
+    var html = '<div class="game-header"><button class="back-btn" id="backHome">⬅ Back</button><span></span></div>';
+    html += '<h1>My Progress</h1>';
+    html += '<div class="progress-list">';
+    [1,2,3].forEach(function(id){
+      var lvl = LEVELS[id];
+      var earned = levelStarCount(id);
+      html += '<div class="progress-row"><span>'+lvl.name+'</span><span>🌟 '+earned+' / '+lvl.words.length+'</span></div>';
+    });
+    html += '</div>';
+    var badge = "Keep going, you're learning!";
+    if(progress.stars >= 60) badge = "🏆 Spelling Champion!";
+    else if(progress.stars >= 30) badge = "🥇 Spelling Superstar!";
+    else if(progress.stars >= 10) badge = "🥈 Great Speller!";
+    html += '<div class="badge">'+badge+'</div>';
+    app.innerHTML = html;
+    document.getElementById("backHome").addEventListener("click", showHome);
+  }
+
+  // ---------- Game screen ----------
+  function startLevel(levelId){
+    current = {
+      levelId: levelId,
+      queue: shuffle(LEVELS[levelId].words),
+      index: 0,
+      mistakesThisWord: 0
+    };
+    renderWord();
+  }
+
+  function renderWord(){
+    var lvl = LEVELS[current.levelId];
+    if(current.index >= current.queue.length){
+      renderLevelComplete();
+      return;
+    }
+    var item = current.queue[current.index];
+    current.mistakesThisWord = 0;
+    current.answer = [];
+    current.letters = shuffle(item.w.split(""));
+    // avoid a shuffle identical to the original word when possible
+    if(current.letters.join("") === item.w && item.w.length > 1){
+      current.letters = shuffle(item.w.split(""));
+    }
+    current.usedTiles = current.letters.map(function(){ return false; });
+
+    var html = '';
+    html += '<div class="game-header">' +
+      '<button class="back-btn" id="backHome">⬅ Back</button>' +
+      '<span class="progress-pill">'+(current.index+1)+' / '+current.queue.length+'</span>' +
+      '</div>';
+    if(item.e){
+      html += '<div class="picture">'+item.e+'</div>';
+    } else {
+      html += '<div class="picture">📖</div>';
+    }
+    html += '<button class="listen-btn" id="listenBtn">🔊 Hear the word</button>';
+    html += '<div class="answer-row" id="answerRow"></div>';
+    html += '<div class="message" id="message"></div>';
+    html += '<div class="tile-pool" id="tilePool"></div>';
+    html += '<button class="next-btn" id="nextBtn">Next word ➡</button>';
+
+    app.innerHTML = html;
+    document.getElementById("backHome").addEventListener("click", showHome);
+    document.getElementById("listenBtn").addEventListener("click", function(){
+      speak(item.w);
+    });
+    document.getElementById("nextBtn").addEventListener("click", function(){
+      current.index++;
+      renderWord();
+    });
+
+    renderAnswerRow(item.w.length);
+    renderTilePool();
+
+    // greet with the word once tiles are ready
+    setTimeout(function(){ speak(item.w); }, 300);
+  }
+
+  function renderAnswerRow(len){
+    var row = document.getElementById("answerRow");
+    var html = '';
+    for(var i=0;i<len;i++){
+      var filled = current.answer[i] !== undefined;
+      html += '<div class="slot '+(filled?'filled':'')+'" data-idx="'+i+'">' + (filled ? current.answer[i].toUpperCase() : '') + '</div>';
+    }
+    row.innerHTML = html;
+    row.querySelectorAll(".slot").forEach(function(slot){
+      slot.addEventListener("click", function(){
+        var idx = parseInt(slot.getAttribute("data-idx"),10);
+        removeFromAnswer(idx);
+      });
+    });
+  }
+
+  function renderTilePool(){
+    var pool = document.getElementById("tilePool");
+    var html = '';
+    current.letters.forEach(function(letter, i){
+      var used = current.usedTiles[i];
+      html += '<button class="tile '+(used?'hidden':'')+'" data-idx="'+i+'">'+letter.toUpperCase()+'</button>';
+    });
+    pool.innerHTML = html;
+    pool.querySelectorAll(".tile").forEach(function(tile){
+      tile.addEventListener("click", function(){
+        var idx = parseInt(tile.getAttribute("data-idx"),10);
+        addToAnswer(idx);
+      });
+    });
+  }
+
+  function addToAnswer(tileIdx){
+    if(current.usedTiles[tileIdx]) return;
+    var item = current.queue[current.index];
+    if(current.answer.length >= item.w.length) return;
+    current.usedTiles[tileIdx] = true;
+    current.answer.push(current.letters[tileIdx]);
+    renderAnswerRow(item.w.length);
+    renderTilePool();
+    if(current.answer.length === item.w.length){
+      checkAnswer();
+    }
+  }
+
+  function removeFromAnswer(slotIdx){
+    if(current.answer[slotIdx] === undefined) return;
+    var letter = current.answer[slotIdx];
+    // find a used tile with this letter to free up
+    for(var i=0;i<current.letters.length;i++){
+      if(current.letters[i] === letter && current.usedTiles[i]){
+        current.usedTiles[i] = false;
+        break;
+      }
+    }
+    current.answer.splice(slotIdx,1);
+    var item = current.queue[current.index];
+    renderAnswerRow(item.w.length);
+    renderTilePool();
+  }
+
+  function checkAnswer(){
+    var item = current.queue[current.index];
+    var guess = current.answer.join("");
+    var msgEl = document.getElementById("message");
+    if(guess === item.w){
+      var key = current.levelId+":"+item.w;
+      if(!progress.done[key]){
+        progress.done[key] = true;
+        progress.stars++;
+        saveProgress(progress);
+        renderTotalStars();
+      }
+      msgEl.textContent = current.mistakesThisWord === 0 ? "🎉 Perfect!" : "🎉 You got it!";
+      msgEl.className = "message good";
+      speak(current.mistakesThisWord === 0 ? "Perfect! Great job!" : "You got it!");
+      launchConfetti();
+      document.getElementById("nextBtn").classList.add("show");
+      // disable tiles
+      document.querySelectorAll(".tile").forEach(function(t){ t.disabled = true; });
+    } else {
+      current.mistakesThisWord++;
+      msgEl.textContent = "Try again!";
+      msgEl.className = "message bad";
+      speak("Try again");
+      var row = document.getElementById("answerRow");
+      row.classList.add("shake");
+      setTimeout(function(){
+        row.classList.remove("shake");
+        // clear the answer and give letters back
+        current.answer = [];
+        current.usedTiles = current.usedTiles.map(function(){ return false; });
+        renderAnswerRow(item.w.length);
+        renderTilePool();
+        if(current.mistakesThisWord >= 3){
+          giveHint();
+        }
+      }, 500);
+    }
+  }
+
+  function giveHint(){
+    var item = current.queue[current.index];
+    var nextLetter = item.w[current.answer.length];
+    var pool = document.getElementById("tilePool");
+    var tiles = pool.querySelectorAll(".tile");
+    for(var i=0;i<tiles.length;i++){
+      var idx = parseInt(tiles[i].getAttribute("data-idx"),10);
+      if(!current.usedTiles[idx] && current.letters[idx] === nextLetter){
+        tiles[i].classList.add("hint");
+        break;
+      }
+    }
+  }
+
+  function renderLevelComplete(){
+    var lvl = LEVELS[current.levelId];
+    var earned = levelStarCount(current.levelId);
+    var html = '';
+    html += '<div class="game-header"><button class="back-btn" id="backHome">⬅ Back</button><span></span></div>';
+    html += '<div class="picture">🏆</div>';
+    html += '<h1>You finished '+lvl.name+'!</h1>';
+    html += '<p class="sub">You earned 🌟 '+earned+' / '+lvl.words.length+' stars</p>';
+    html += '<button class="listen-btn" id="playAgain">🔁 Play again</button>';
+    app.innerHTML = html;
+    document.getElementById("backHome").addEventListener("click", showHome);
+    document.getElementById("playAgain").addEventListener("click", function(){
+      startLevel(current.levelId);
+    });
+    speak("Great job! You finished " + lvl.name);
+    launchConfetti();
+  }
+
+  // ---------- Confetti ----------
+  var CONFETTI_EMOJI = ["🎉","⭐","✨","🌟","🎊"];
+  function launchConfetti(){
+    for(var i=0;i<18;i++){
+      (function(i){
+        setTimeout(function(){
+          var el = document.createElement("div");
+          el.className = "confetti";
+          el.textContent = CONFETTI_EMOJI[Math.floor(Math.random()*CONFETTI_EMOJI.length)];
+          el.style.left = Math.floor(Math.random()*100) + "vw";
+          el.style.animationDuration = (2 + Math.random()*1.5) + "s";
+          document.body.appendChild(el);
+          setTimeout(function(){ el.remove(); }, 4000);
+        }, i*60);
+      })(i);
+    }
+  }
+
+  // ---------- Init ----------
+  document.getElementById("homeLink").addEventListener("click", showHome);
+  showHome();
+})();
+</script>
+</body>
+</html>
