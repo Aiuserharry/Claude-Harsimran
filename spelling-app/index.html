@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spelling Stars</title>
+<style>
+  :root{
+    --pink:#ff6b9d;
+    --purple:#7c5cff;
+    --blue:#3fb6ff;
+    --green:#38d68a;
+    --yellow:#ffcf3f;
+    --orange:#ff9a3f;
+    --ink:#2c2c4a;
+    --card:#ffffff;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;
+    height:100%;
+    font-family:"Comic Sans MS","Comic Neue",Verdana,"Trebuchet MS",sans-serif;
+    color:var(--ink);
+    background:linear-gradient(135deg,#a8e6ff,#ffd6ec);
+    overflow-x:hidden;
+  }
+  body{
+    min-height:100%;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:16px;
+  }
+  .topbar{
+    width:100%;
+    max-width:640px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:12px;
+  }
+  .brand{
+    font-size:26px;
+    font-weight:bold;
+    color:var(--purple);
+    text-shadow:1px 1px 0 #fff;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    cursor:pointer;
+    user-select:none;
+  }
+  .star-total{
+    background:var(--card);
+    border-radius:999px;
+    padding:8px 16px;
+    font-size:18px;
+    font-weight:bold;
+    box-shadow:0 4px 0 rgba(0,0,0,0.08);
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .card{
+    width:100%;
+    max-width:640px;
+    background:var(--card);
+    border-radius:28px;
+    box-shadow:0 10px 0 rgba(0,0,0,0.08);
+    padding:28px 22px;
+    text-align:center;
+  }
+  h1{margin:4px 0 6px;font-size:28px;}
+  p.sub{margin:0 0 20px;font-size:17px;color:#555;}
+
+  .levels{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:16px;
+  }
+  .level-btn{
+    border:none;
+    border-radius:20px;
+    padding:20px;
+    font-size:22px;
+    font-weight:bold;
+    color:#fff;
+    cursor:pointer;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    box-shadow:0 6px 0 rgba(0,0,0,0.15);
+    transition:transform .08s;
+    font-family:inherit;
+  }
+  .level-btn:active{transform:translateY(4px);box-shadow:0 2px 0 rgba(0,0,0,0.15);}
+  .level-primary{background:linear-gradient(135deg,var(--pink),#c94574);}
+  .level-btn .stars-earned{font-size:15px;font-weight:normal;opacity:.95;}
+
+  .btn-row{
+    display:flex;
+    gap:10px;
+    justify-content:center;
+    flex-wrap:wrap;
+    margin-top:18px;
+  }
+  .progress-btn{
+    margin-top:0;
+    background:none;
+    border:2px dashed #bbb;
+    border-radius:16px;
+    padding:10px 18px;
+    font-size:15px;
+    color:#777;
+    cursor:pointer;
+    font-family:inherit;
+  }
+  .voice-select{
+    width:100%;
+    padding:12px 14px;
+    font-size:16px;
+    border:2px solid #ddd;
+    border-radius:12px;
+    font-family:inherit;
+    color:var(--ink);
+    background:#fff;
+    margin-bottom:16px;
+  }
+
+  /* Game screen */
+  .game-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:10px;
+  }
+  .back-btn{
+    background:#eee;
+    border:none;
+    border-radius:12px;
+    padding:8px 14px;
+    font-size:16px;
+    cursor:pointer;
+    font-family:inherit;
+  }
+  .progress-pill{
+    background:#f2f2f2;
+    border-radius:999px;
+    padding:6px 14px;
+    font-size:14px;
+    font-weight:bold;
+  }
+
+  .picture{
+    font-size:80px;
+    line-height:1;
+    margin:10px 0;
+    animation:pop .3s ease;
+  }
+  @keyframes pop{from{transform:scale(0.5);opacity:0;}to{transform:scale(1);opacity:1;}}
+
+  .listen-btn{
+    background:var(--blue);
+    color:#fff;
+    border:none;
+    border-radius:999px;
+    padding:14px 26px;
+    font-size:20px;
+    font-weight:bold;
+    cursor:pointer;
+    box-shadow:0 5px 0 #1b8bc9;
+    margin:10px 0 22px;
+    font-family:inherit;
+  }
+  .listen-btn:active{transform:translateY(3px);box-shadow:0 2px 0 #1b8bc9;}
+
+  .answer-row{
+    display:flex;
+    justify-content:center;
+    gap:8px;
+    flex-wrap:wrap;
+    min-height:64px;
+    margin-bottom:20px;
+  }
+  .slot{
+    width:var(--tile-size,52px);
+    height:calc(var(--tile-size,52px) + 4px);
+    border-bottom:5px solid #ccc;
+    border-radius:8px 8px 0 0;
+    background:#f7f7fb;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:calc(var(--tile-size,52px) * 0.55);
+    font-weight:bold;
+    cursor:pointer;
+    color:var(--ink);
+  }
+  .slot.filled{border-bottom-color:var(--purple);background:#efe9ff;}
+  .slot.empty{visibility:hidden;}
+
+  .tile-pool{
+    display:flex;
+    justify-content:center;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-bottom:10px;
+    min-height:64px;
+  }
+  .tile{
+    width:var(--tile-size,52px);
+    height:calc(var(--tile-size,52px) + 4px);
+    border:none;
+    border-radius:12px;
+    background:var(--yellow);
+    font-size:calc(var(--tile-size,52px) * 0.5);
+    font-weight:bold;
+    color:var(--ink);
+    cursor:pointer;
+    box-shadow:0 4px 0 #d9ac1f;
+    font-family:inherit;
+  }
+  .tile:active{transform:translateY(3px);box-shadow:0 1px 0 #d9ac1f;}
+  .tile.hint{
+    animation:glow 0.9s infinite alternate;
+  }
+  @keyframes glow{from{box-shadow:0 4px 0 #d9ac1f;}to{box-shadow:0 4px 0 #d9ac1f,0 0 16px 6px #ffe58a;}}
+  .tile.hidden{visibility:hidden;pointer-events:none;}
+
+  .message{
+    min-height:34px;
+    font-size:20px;
+    font-weight:bold;
+    margin-bottom:6px;
+  }
+  .message.good{color:#1fae6f;}
+  .message.bad{color:#e6522a;}
+
+  .shake{animation:shake .4s;}
+  @keyframes shake{
+    10%,90%{transform:translateX(-4px);}
+    20%,80%{transform:translateX(6px);}
+    30%,50%,70%{transform:translateX(-10px);}
+    40%,60%{transform:translateX(10px);}
+  }
+
+  .next-btn{
+    background:var(--pink);
+    color:#fff;
+    border:none;
+    border-radius:999px;
+    padding:14px 30px;
+    font-size:20px;
+    font-weight:bold;
+    cursor:pointer;
+    box-shadow:0 5px 0 #c94574;
+    font-family:inherit;
+    display:none;
+  }
+  .next-btn.show{display:inline-block;}
+
+  .confetti{
+    position:fixed;
+    top:-20px;
+    font-size:26px;
+    animation:fall linear forwards;
+    pointer-events:none;
+  }
+  @keyframes fall{
+    to{transform:translateY(110vh) rotate(360deg);opacity:0.4;}
+  }
+
+  /* Mode select */
+  .mode-btn{
+    display:block;
+    width:100%;
+    border:none;
+    border-radius:20px;
+    padding:22px;
+    font-size:20px;
+    font-weight:bold;
+    color:#fff;
+    cursor:pointer;
+    box-shadow:0 6px 0 rgba(0,0,0,0.15);
+    font-family:inherit;
+    margin-bottom:16px;
+    text-align:left;
+  }
+  .mode-btn:active{transform:translateY(4px);box-shadow:0 2px 0 rgba(0,0,0,0.15);}
+  .mode-btn .mode-desc{display:block;font-size:14px;font-weight:normal;opacity:.9;margin-top:4px;}
+  .mode-practice{background:linear-gradient(135deg,var(--blue),#1b8bc9);}
+  .mode-test{background:linear-gradient(135deg,var(--purple),#5738c9);}
+
+  /* Dictation (test) mode */
+  .typed-display{
+    min-height:60px;
+    border-bottom:5px solid var(--purple);
+    border-radius:8px;
+    background:#f7f7fb;
+    font-size:32px;
+    font-weight:bold;
+    letter-spacing:6px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:6px 14px;
+    margin-bottom:16px;
+    color:var(--ink);
+    word-break:break-all;
+  }
+  .typed-display.placeholder{
+    color:#aaa;
+    font-size:16px;
+    font-weight:normal;
+    letter-spacing:normal;
+  }
+  .keyboard-toggle{
+    background:none;
+    border:2px solid #ddd;
+    border-radius:999px;
+    padding:6px 14px;
+    font-size:13px;
+    color:#777;
+    cursor:pointer;
+    font-family:inherit;
+    margin-bottom:14px;
+  }
+  .keyboard-grid{
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:center;
+    gap:6px;
+    margin-bottom:16px;
+  }
+  .key-tile{
+    width:38px;
+    height:42px;
+    border:none;
+    border-radius:10px;
+    background:var(--yellow);
+    font-size:18px;
+    font-weight:bold;
+    color:var(--ink);
+    cursor:pointer;
+    box-shadow:0 3px 0 #d9ac1f;
+    font-family:inherit;
+  }
+  .key-tile:active{transform:translateY(2px);box-shadow:0 1px 0 #d9ac1f;}
+  .key-tile:disabled{opacity:.5;cursor:default;}
+  .key-wide{width:auto;padding:0 16px;}
+  .key-backspace{background:#eee;box-shadow:0 3px 0 #ccc;}
+  .check-btn{
+    background:var(--green);
+    color:#fff;
+    border:none;
+    border-radius:999px;
+    padding:14px 30px;
+    font-size:20px;
+    font-weight:bold;
+    cursor:pointer;
+    box-shadow:0 5px 0 #1fae6f;
+    font-family:inherit;
+    margin-bottom:16px;
+  }
+  .check-btn:active{transform:translateY(3px);box-shadow:0 2px 0 #1fae6f;}
+  .check-btn:disabled{opacity:.5;cursor:default;}
+  .results-list{text-align:left;margin:14px 0;}
+  .results-row{
+    display:flex;
+    justify-content:space-between;
+    padding:8px 4px;
+    border-bottom:1px solid #eee;
+    font-size:16px;
+  }
+
+  .word-form{
+    display:flex;
+    gap:8px;
+    margin-bottom:16px;
+  }
+  .word-input{
+    flex:1;
+    min-width:0;
+    padding:12px 14px;
+    font-size:18px;
+    border:2px solid #ddd;
+    border-radius:12px;
+    font-family:inherit;
+  }
+  .add-btn{
+    background:var(--green);
+    color:#fff;
+    border:none;
+    border-radius:12px;
+    padding:0 20px;
+    font-size:18px;
+    font-weight:bold;
+    cursor:pointer;
+    font-family:inherit;
+  }
+  .form-error{
+    color:#e6522a;
+    font-size:14px;
+    min-height:20px;
+    margin:-10px 0 12px;
+    text-align:left;
+  }
+  .word-chips{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    justify-content:center;
+    margin-bottom:20px;
+    min-height:40px;
+  }
+  .word-chip{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    background:#f2f2f2;
+    border-radius:999px;
+    padding:8px 8px 8px 16px;
+    font-size:16px;
+    font-weight:bold;
+  }
+  .word-chip button{
+    background:#ddd;
+    border:none;
+    border-radius:50%;
+    width:22px;
+    height:22px;
+    cursor:pointer;
+    font-size:13px;
+    line-height:1;
+  }
+  .empty-hint{color:#999;font-size:15px;}
+
+  .progress-list{text-align:left;margin-top:10px;}
+  .progress-row{
+    display:flex;
+    justify-content:space-between;
+    padding:10px 4px;
+    border-bottom:1px solid #eee;
+    font-size:17px;
+  }
+  .badge{
+    margin-top:14px;
+    font-size:18px;
+    font-weight:bold;
+    color:var(--purple);
+  }
+
+  @media (min-width:480px){
+    .levels{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand" id="homeLink">⭐ Spelling Stars</div>
+  <div class="star-total">🌟 <span id="totalStars">0</span></div>
+</div>
+
+<div class="card" id="app"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- Word data ----------
+  var LEVELS = {};
+  var CUSTOM_LEVEL_ID = "custom";
+  var MIN_WORD_LEN = 2;
+  var MAX_WORD_LEN = 15;
+
+  // ---------- Custom word list (localStorage) ----------
+  var CUSTOM_WORDS_KEY = "spellingStarsCustomWords";
+  function loadCustomWords(){
+    try{
+      var raw = localStorage.getItem(CUSTOM_WORDS_KEY);
+      if(raw) return JSON.parse(raw);
+    }catch(e){}
+    return [];
+  }
+  function saveCustomWords(words){
+    try{ localStorage.setItem(CUSTOM_WORDS_KEY, JSON.stringify(words)); }catch(e){}
+  }
+  var customWords = loadCustomWords();
+
+  function refreshCustomLevel(){
+    LEVELS[CUSTOM_LEVEL_ID] = {
+      name: "My Own Words",
+      color: "level-4",
+      icon: "✏️",
+      words: customWords.map(function(w){ return {w:w, e:""}; })
+    };
+  }
+  refreshCustomLevel();
+
+  // ---------- Progress (localStorage) ----------
+  var STORAGE_KEY = "spellingStarsProgress";
+  function loadProgress(){
+    try{
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if(raw) return JSON.parse(raw);
+    }catch(e){}
+    return {stars:0, done:{}};
+  }
+  function saveProgress(p){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(p)); }catch(e){}
+  }
+  var progress = loadProgress();
+
+  function levelStarCount(levelId){
+    var words = LEVELS[levelId].words;
+    var count = 0;
+    for(var i=0;i<words.length;i++){
+      if(progress.done[levelId+":"+words[i].w]) count++;
+    }
+    return count;
+  }
+  function renderTotalStars(){
+    document.getElementById("totalStars").textContent = progress.stars;
+  }
+
+  // ---------- Speech ----------
+  var FEMALE_VOICE_HINTS = [
+    "female","samantha","victoria","karen","moira","tessa","fiona","zira","hazel",
+    "susan","kate","serena","allison","ava","emma","joanna","salli","kendra","kimberly",
+    "heera","veena","priya","google us english"
+  ];
+  function isFemaleVoiceName(name){
+    name = (name || "").toLowerCase();
+    for(var i=0;i<FEMALE_VOICE_HINTS.length;i++){
+      if(name.indexOf(FEMALE_VOICE_HINTS[i]) !== -1) return true;
+    }
+    return false;
+  }
+  function getAllVoices(){
+    if(!("speechSynthesis" in window)) return [];
+    return window.speechSynthesis.getVoices() || [];
+  }
+  // Prefer an Indian-English voice (any installed on this browser/device);
+  // among those, prefer one that sounds female. Otherwise fall back to any
+  // female-sounding English voice, then any English voice, then whatever's first.
+  function pickDefaultVoice(){
+    var voices = getAllVoices();
+    if(!voices.length) return null;
+    var indian = voices.filter(function(v){ return /^en-in/i.test(v.lang); });
+    if(indian.length){
+      for(var i=0;i<indian.length;i++){ if(isFemaleVoiceName(indian[i].name)) return indian[i]; }
+      return indian[0];
+    }
+    var english = voices.filter(function(v){ return /^en/i.test(v.lang); });
+    var pool = english.length ? english : voices;
+    for(var j=0;j<pool.length;j++){ if(isFemaleVoiceName(pool[j].name)) return pool[j]; }
+    return pool[0];
+  }
+
+  var VOICE_PREF_KEY = "spellingStarsVoiceURI";
+  function loadVoicePref(){
+    try{ return localStorage.getItem(VOICE_PREF_KEY) || ""; }catch(e){ return ""; }
+  }
+  function saveVoicePref(uri){
+    try{ localStorage.setItem(VOICE_PREF_KEY, uri); }catch(e){}
+  }
+  var voicePref = loadVoicePref();
+
+  // The voice actually used: the parent's manual pick if it's still available,
+  // otherwise the best automatic guess.
+  function getActiveVoice(){
+    var voices = getAllVoices();
+    if(!voices.length) return null;
+    if(voicePref){
+      for(var i=0;i<voices.length;i++){
+        if(voices[i].voiceURI === voicePref) return voices[i];
+      }
+    }
+    return pickDefaultVoice();
+  }
+
+  function queueSpeech(text, rate, pitch){
+    if(!("speechSynthesis" in window)) return;
+    try{
+      var u = new SpeechSynthesisUtterance(text);
+      u.rate = rate;
+      u.pitch = pitch === undefined ? 1.0 : pitch;
+      var v = getActiveVoice();
+      if(v) u.voice = v;
+      window.speechSynthesis.speak(u);
+    }catch(e){}
+  }
+  // Short phrases, spoken at a natural pace with a touch of pitch variation
+  // so it doesn't sound flat and robotic every time.
+  function speak(text, rate){
+    if(!("speechSynthesis" in window)) return;
+    try{ window.speechSynthesis.cancel(); }catch(e){}
+    queueSpeech(text, rate || 0.98, 0.95 + Math.random()*0.15);
+  }
+  // Celebration lines: faster and noticeably higher-pitched, so it actually
+  // sounds excited instead of a flat "correct" beep.
+  function speakCelebration(text){
+    if(!("speechSynthesis" in window)) return;
+    try{ window.speechSynthesis.cancel(); }catch(e){}
+    queueSpeech(text, 1.05 + Math.random()*0.1, 1.2 + Math.random()*0.25);
+  }
+  // The word itself, spoken clearly so it's easy to make out. Rate is
+  // slowed a little for clarity but kept close to natural so it doesn't
+  // sound dead; pitch gets the same light natural variation as speak().
+  function announceWord(word){
+    if(!("speechSynthesis" in window)) return;
+    try{ window.speechSynthesis.cancel(); }catch(e){}
+    queueSpeech(word, 0.8, 0.97 + Math.random()*0.1);
+  }
+  // A short lead-in phrase followed by the word, spoken clearly.
+  function announcePhraseThenWord(phrase, word){
+    if(!("speechSynthesis" in window)) return;
+    try{ window.speechSynthesis.cancel(); }catch(e){}
+    queueSpeech(phrase, 0.98);
+    queueSpeech(word, 0.8);
+  }
+
+  // ---------- Celebrations (message + speech + sound) ----------
+  var CELEBRATIONS = [
+    {emoji:"🍬", text:"Sweet! You got it!"},
+    {emoji:"🍭", text:"Yummy! A candy for you!"},
+    {emoji:"🍫", text:"Delicious! Well done!"},
+    {emoji:"🙌", text:"High five!"},
+    {emoji:"👏", text:"Great job!"},
+    {emoji:"🌟", text:"Wow, superstar!"},
+    {emoji:"🥳", text:"Woohoo! You did it!"},
+    {emoji:"🎉", text:"Yay! Awesome work!"}
+  ];
+  function pickCelebration(){
+    return CELEBRATIONS[Math.floor(Math.random()*CELEBRATIONS.length)];
+  }
+
+  // ---------- Celebration sound effect ----------
+  var audioCtx = null;
+  function getAudioCtx(){
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if(!AC) return null;
+    if(!audioCtx) audioCtx = new AC();
+    if(audioCtx.state === "suspended"){ try{ audioCtx.resume(); }catch(e){} }
+    return audioCtx;
+  }
+  function playChimeNote(ctx, freq, startTime, duration, peak){
+    var osc = ctx.createOscillator();
+    var gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.0001, startTime);
+    gain.gain.linearRampToValueAtTime(peak, startTime + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(startTime);
+    osc.stop(startTime + duration + 0.02);
+  }
+  function playCelebrationSound(){
+    try{
+      var ctx = getAudioCtx();
+      if(!ctx) return;
+      var now = ctx.currentTime;
+      var notes = [523.25, 659.25, 783.99, 1046.5]; // C5 E5 G5 C6 - a happy little "ta-da"
+      notes.forEach(function(freq, i){
+        playChimeNote(ctx, freq, now + i*0.09, 0.28, 0.18);
+      });
+    }catch(e){}
+  }
+
+  // ---------- App state ----------
+  var app = document.getElementById("app");
+  var current = null; // {levelId, queue, index}
+
+  function shuffle(arr){
+    var a = arr.slice();
+    for(var i=a.length-1;i>0;i--){
+      var j = Math.floor(Math.random()*(i+1));
+      var t=a[i]; a[i]=a[j]; a[j]=t;
+    }
+    return a;
+  }
+
+  // ---------- Home screen ----------
+  function showHome(){
+    current = null;
+    renderTotalStars();
+    var customLvl = LEVELS[CUSTOM_LEVEL_ID];
+    var customCount = customLvl.words.length;
+    var html = '';
+    html += '<h1>Let\'s Practice Spelling!</h1>';
+    html += '<p class="sub">'+(customCount ? ('You have '+customCount+' word'+(customCount===1?'':'s')+' ready to practice.') : 'Add your own words to get started.')+'</p>';
+    html += '<div class="levels">';
+    html += '<button class="level-btn level-primary" id="customLevelBtn">' +
+      '<span>✏️ '+customLvl.name+'</span>' +
+      '<span class="stars-earned">'+(customCount ? (customCount+' word'+(customCount===1?'':'s')) : 'Add your own words')+'</span>' +
+      '</button>';
+    html += '</div>';
+    html += '<div class="btn-row">' +
+      '<button class="progress-btn" id="progressBtn">See my progress</button>' +
+      '<button class="progress-btn" id="voiceBtn">🔊 Voice settings</button>' +
+      '</div>';
+    app.innerHTML = html;
+
+    document.getElementById("customLevelBtn").addEventListener("click", showCustomEditor);
+    document.getElementById("progressBtn").addEventListener("click", showProgress);
+    document.getElementById("voiceBtn").addEventListener("click", showVoiceSettings);
+  }
+
+  // ---------- Progress screen ----------
+  function showProgress(){
+    var html = '<div class="game-header"><button class="back-btn" id="backHome">⬅ Back</button><span></span></div>';
+    html += '<h1>My Progress</h1>';
+    var customLvl = LEVELS[CUSTOM_LEVEL_ID];
+    var customEarned = levelStarCount(CUSTOM_LEVEL_ID);
+    html += '<div class="progress-list">';
+    html += '<div class="progress-row"><span>'+customLvl.name+'</span><span>🌟 '+customEarned+' / '+customLvl.words.length+'</span></div>';
+    html += '</div>';
+    var badge = "Keep going, you're learning!";
+    if(progress.stars >= 60) badge = "🏆 Spelling Champion!";
+    else if(progress.stars >= 30) badge = "🥇 Spelling Superstar!";
+    else if(progress.stars >= 10) badge = "🥈 Great Speller!";
+    html += '<div class="badge">'+badge+'</div>';
+    app.innerHTML = html;
+    document.getElementById("backHome").addEventListener("click", showHome);
+  }
+
+  // ---------- Voice settings ----------
+  function showVoiceSettings(){
+    var html = '<div class="game-header"><button class="back-btn" id="backHome">⬅ Back</button><span></span></div>';
+    html += '<h1>Voice Settings</h1>';
+    html += '<p class="sub">Pick whichever voice sounds clearest on this device. Indian English voices (🇮🇳) are preferred automatically when one is installed.</p>';
+    html += '<select class="voice-select" id="voiceSelect"><option>Loading voices&hellip;</option></select>';
+    html += '<button class="listen-btn" id="tryVoiceBtn">🔊 Try this voice</button>';
+    html += '<div class="form-error" id="voiceHint"></div>';
+    app.innerHTML = html;
+    document.getElementById("backHome").addEventListener("click", showHome);
+    document.getElementById("tryVoiceBtn").addEventListener("click", function(){
+      announceWord("hammer");
+    });
+    populateVoiceSelect();
+    if("speechSynthesis" in window && !getAllVoices().length){
+      window.speechSynthesis.addEventListener("voiceschanged", populateVoiceSelect);
+    }
+  }
+
+  function populateVoiceSelect(){
+    var select = document.getElementById("voiceSelect");
+    if(!select) return;
+    var voices = getAllVoices();
+    var html = '<option value="">✨ Auto (recommended)</option>';
+    voices.forEach(function(v){
+      var indianFlag = /^en-in/i.test(v.lang) ? " 🇮🇳" : "";
+      var label = v.name + " (" + v.lang + ")" + indianFlag;
+      var selected = v.voiceURI === voicePref ? " selected" : "";
+      html += '<option value="'+v.voiceURI.replace(/"/g,"&quot;")+'"'+selected+'>'+label+'</option>';
+    });
+    select.innerHTML = html;
+    select.onchange = function(){
+      voicePref = select.value;
+      saveVoicePref(voicePref);
+      announceWord("hammer");
+    };
+    var hint = document.getElementById("voiceHint");
+    if(hint){
+      var hasIndian = voices.some(function(v){ return /^en-in/i.test(v.lang); });
+      hint.textContent = (voices.length && !hasIndian) ?
+        "No Indian English voice was found on this browser/device. Try Chrome on Android, or check your device's language/voice settings to install one." : "";
+    }
+  }
+
+  // ---------- Custom word editor ----------
+  function showCustomEditor(){
+    var html = '<div class="game-header"><button class="back-btn" id="backHome">⬅ Back</button><span></span></div>';
+    html += '<h1>My Own Words</h1>';
+    html += '<p class="sub">Add any word to practice &mdash; short or long (up to '+MAX_WORD_LEN+' letters)</p>';
+    html += '<div class="word-form">' +
+      '<input type="text" class="word-input" id="newWordInput" placeholder="Type a word, e.g. elephant" maxlength="'+MAX_WORD_LEN+'">' +
+      '<button class="add-btn" id="addWordBtn">Add</button>' +
+      '</div>';
+    html += '<div class="form-error" id="formError"></div>';
+    html += '<div class="word-chips" id="wordChips"></div>';
+    html += '<button class="listen-btn" id="continueBtn">🚀 Continue</button>';
+    app.innerHTML = html;
+
+    document.getElementById("backHome").addEventListener("click", showHome);
+    renderWordChips();
+
+    var input = document.getElementById("newWordInput");
+    var errorEl = document.getElementById("formError");
+
+    function tryAddWord(){
+      var raw = input.value.trim().toLowerCase();
+      errorEl.textContent = "";
+      if(!raw) return;
+      if(!/^[a-z]+$/.test(raw)){
+        errorEl.textContent = "Please use letters only (a-z).";
+        return;
+      }
+      if(raw.length < MIN_WORD_LEN || raw.length > MAX_WORD_LEN){
+        errorEl.textContent = "Words should be "+MIN_WORD_LEN+" to "+MAX_WORD_LEN+" letters long.";
+        return;
+      }
+      if(customWords.indexOf(raw) !== -1){
+        errorEl.textContent = "\""+raw+"\" is already on the list.";
+        return;
+      }
+      customWords.push(raw);
+      saveCustomWords(customWords);
+      refreshCustomLevel();
+      input.value = "";
+      renderWordChips();
+      input.focus();
+    }
+
+    document.getElementById("addWordBtn").addEventListener("click", tryAddWord);
+    input.addEventListener("keydown", function(ev){
+      if(ev.key === "Enter"){ ev.preventDefault(); tryAddWord(); }
+    });
+
+    document.getElementById("continueBtn").addEventListener("click", function(){
+      if(customWords.length === 0){
+        errorEl.textContent = "Add at least one word first!";
+        return;
+      }
+      showModeSelect(CUSTOM_LEVEL_ID);
+    });
+  }
+
+  function renderWordChips(){
+    var box = document.getElementById("wordChips");
+    if(customWords.length === 0){
+      box.innerHTML = '<span class="empty-hint">No words yet &mdash; add one above.</span>';
+      return;
+    }
+    var html = '';
+    customWords.forEach(function(w, i){
+      html += '<span class="word-chip">'+w+' <button data-idx="'+i+'" aria-label="Remove '+w+'">✕</button></span>';
+    });
+    box.innerHTML = html;
+    box.querySelectorAll("button").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        var idx = parseInt(btn.getAttribute("data-idx"),10);
+        customWords.splice(idx,1);
+        saveCustomWords(customWords);
+        refreshCustomLevel();
+        renderWordChips();
+      });
+    });
+  }
+
+  // ---------- Mode select ----------
+  function showModeSelect(levelId){
+    var lvl = LEVELS[levelId];
+    var html = '<div class="game-header"><button class="back-btn" id="backHome">⬅ Back</button><span></span></div>';
+    html += '<h1>'+lvl.name+'</h1>';
+    html += '<p class="sub">How do you want to practice?</p>';
+    html += '<button class="mode-btn mode-practice" id="practiceModeBtn">🧩 Practice' +
+      '<span class="mode-desc">See the letters and put them in order.</span></button>';
+    html += '<button class="mode-btn mode-test" id="testModeBtn">✍️ Test' +
+      '<span class="mode-desc">Just listen, then write the word yourself &mdash; no letters shown.</span></button>';
+    app.innerHTML = html;
+    document.getElementById("backHome").addEventListener("click", showHome);
+    document.getElementById("practiceModeBtn").addEventListener("click", function(){ startLevel(levelId, "practice"); });
+    document.getElementById("testModeBtn").addEventListener("click", function(){ startLevel(levelId, "test"); });
+  }
+
+  // ---------- Game screen ----------
+  function startLevel(levelId, mode){
+    current = {
+      levelId: levelId,
+      mode: mode,
+      queue: shuffle(LEVELS[levelId].words),
+      index: 0,
+      sessionResults: []
+    };
+    renderWord();
+  }
+
+  function renderWord(){
+    var lvl = LEVELS[current.levelId];
+    if(current.index >= current.queue.length){
+      renderLevelComplete();
+      return;
+    }
+    var item = current.queue[current.index];
+    if(current.mode === "test"){
+      renderTestWord(item, lvl);
+    } else {
+      renderPracticeWord(item, lvl);
+    }
+  }
+
+  function renderPracticeWord(item, lvl){
+    current.mistakesThisWord = 0;
+    current.answer = [];
+    current.letters = shuffle(item.w.split(""));
+    // avoid a shuffle identical to the original word when possible
+    if(current.letters.join("") === item.w && item.w.length > 1){
+      current.letters = shuffle(item.w.split(""));
+    }
+    current.usedTiles = current.letters.map(function(){ return false; });
+
+    var html = '';
+    html += '<div class="game-header">' +
+      '<button class="back-btn" id="backHome">⬅ Back</button>' +
+      '<span class="progress-pill">'+(current.index+1)+' / '+current.queue.length+'</span>' +
+      '</div>';
+    html += '<div class="picture">'+(item.e || lvl.icon || "📖")+'</div>';
+    html += '<button class="listen-btn" id="listenBtn">🔊 Hear the word</button>';
+    html += '<div class="answer-row" id="answerRow"></div>';
+    html += '<div class="message" id="message"></div>';
+    html += '<div class="tile-pool" id="tilePool"></div>';
+    html += '<button class="next-btn" id="nextBtn">Next word ➡</button>';
+
+    app.innerHTML = html;
+    var tileSize = item.w.length <= 6 ? 52 : item.w.length <= 8 ? 44 : item.w.length <= 10 ? 38 : 32;
+    app.style.setProperty("--tile-size", tileSize + "px");
+    document.getElementById("backHome").addEventListener("click", showHome);
+    document.getElementById("listenBtn").addEventListener("click", function(){
+      announceWord(item.w);
+    });
+    document.getElementById("nextBtn").addEventListener("click", function(){
+      current.index++;
+      renderWord();
+    });
+
+    renderAnswerRow(item.w.length);
+    renderTilePool();
+
+    // greet with the word once tiles are ready
+    setTimeout(function(){ announceWord(item.w); }, 300);
+  }
+
+  function renderAnswerRow(len){
+    var row = document.getElementById("answerRow");
+    var html = '';
+    for(var i=0;i<len;i++){
+      var filled = current.answer[i] !== undefined;
+      html += '<div class="slot '+(filled?'filled':'')+'" data-idx="'+i+'">' + (filled ? current.answer[i].toUpperCase() : '') + '</div>';
+    }
+    row.innerHTML = html;
+    row.querySelectorAll(".slot").forEach(function(slot){
+      slot.addEventListener("click", function(){
+        var idx = parseInt(slot.getAttribute("data-idx"),10);
+        removeFromAnswer(idx);
+      });
+    });
+  }
+
+  function renderTilePool(){
+    var pool = document.getElementById("tilePool");
+    var html = '';
+    current.letters.forEach(function(letter, i){
+      var used = current.usedTiles[i];
+      html += '<button class="tile '+(used?'hidden':'')+'" data-idx="'+i+'">'+letter.toUpperCase()+'</button>';
+    });
+    pool.innerHTML = html;
+    pool.querySelectorAll(".tile").forEach(function(tile){
+      tile.addEventListener("click", function(){
+        var idx = parseInt(tile.getAttribute("data-idx"),10);
+        addToAnswer(idx);
+      });
+    });
+  }
+
+  function addToAnswer(tileIdx){
+    if(current.usedTiles[tileIdx]) return;
+    var item = current.queue[current.index];
+    if(current.answer.length >= item.w.length) return;
+    current.usedTiles[tileIdx] = true;
+    current.answer.push(current.letters[tileIdx]);
+    renderAnswerRow(item.w.length);
+    renderTilePool();
+    if(current.answer.length === item.w.length){
+      checkAnswer();
+    }
+  }
+
+  function removeFromAnswer(slotIdx){
+    if(current.answer[slotIdx] === undefined) return;
+    var letter = current.answer[slotIdx];
+    // find a used tile with this letter to free up
+    for(var i=0;i<current.letters.length;i++){
+      if(current.letters[i] === letter && current.usedTiles[i]){
+        current.usedTiles[i] = false;
+        break;
+      }
+    }
+    current.answer.splice(slotIdx,1);
+    var item = current.queue[current.index];
+    renderAnswerRow(item.w.length);
+    renderTilePool();
+  }
+
+  function checkAnswer(){
+    var item = current.queue[current.index];
+    var guess = current.answer.join("");
+    var msgEl = document.getElementById("message");
+    if(guess === item.w){
+      var key = current.levelId+":"+item.w;
+      if(!progress.done[key]){
+        progress.done[key] = true;
+        progress.stars++;
+        saveProgress(progress);
+        renderTotalStars();
+      }
+      var celebration = pickCelebration();
+      msgEl.textContent = celebration.emoji + " " + celebration.text;
+      msgEl.className = "message good";
+      speakCelebration(celebration.text);
+      launchConfetti();
+      document.getElementById("nextBtn").classList.add("show");
+      // disable tiles
+      document.querySelectorAll(".tile").forEach(function(t){ t.disabled = true; });
+    } else {
+      current.mistakesThisWord++;
+      msgEl.textContent = "Try again!";
+      msgEl.className = "message bad";
+      speak("Try again");
+      var row = document.getElementById("answerRow");
+      row.classList.add("shake");
+      setTimeout(function(){
+        row.classList.remove("shake");
+        // clear the answer and give letters back
+        current.answer = [];
+        current.usedTiles = current.usedTiles.map(function(){ return false; });
+        renderAnswerRow(item.w.length);
+        renderTilePool();
+        if(current.mistakesThisWord >= 3){
+          giveHint();
+        }
+      }, 500);
+    }
+  }
+
+  function giveHint(){
+    var item = current.queue[current.index];
+    var nextLetter = item.w[current.answer.length];
+    var pool = document.getElementById("tilePool");
+    var tiles = pool.querySelectorAll(".tile");
+    for(var i=0;i<tiles.length;i++){
+      var idx = parseInt(tiles[i].getAttribute("data-idx"),10);
+      if(!current.usedTiles[idx] && current.letters[idx] === nextLetter){
+        tiles[i].classList.add("hint");
+        break;
+      }
+    }
+  }
+
+  // ---------- Dictation (test) mode ----------
+  var SHOW_KEYBOARD_KEY = "spellingStarsShowKeyboard";
+  function loadShowKeyboard(){
+    try{
+      var raw = localStorage.getItem(SHOW_KEYBOARD_KEY);
+      if(raw !== null) return raw === "1";
+    }catch(e){}
+    return true;
+  }
+  function saveShowKeyboard(val){
+    try{ localStorage.setItem(SHOW_KEYBOARD_KEY, val ? "1" : "0"); }catch(e){}
+  }
+  var showOnscreenKeyboard = loadShowKeyboard();
+
+  document.addEventListener("keydown", function(e){
+    if(!current || current.mode !== "test" || current.locked) return;
+    if(e.ctrlKey || e.metaKey || e.altKey) return;
+    if(/^[a-zA-Z]$/.test(e.key)){
+      appendLetter(e.key.toLowerCase());
+    } else if(e.key === "Backspace"){
+      e.preventDefault();
+      removeLetter();
+    } else if(e.key === "Enter"){
+      e.preventDefault();
+      triggerCheck();
+    }
+  });
+
+  function renderTestWord(item, lvl){
+    current.attempts = 0;
+    current.typed = "";
+    current.locked = false;
+
+    var html = '';
+    html += '<div class="game-header">' +
+      '<button class="back-btn" id="backHome">⬅ Back</button>' +
+      '<span class="progress-pill">'+(current.index+1)+' / '+current.queue.length+'</span>' +
+      '</div>';
+    html += '<div class="picture">👂</div>';
+    html += '<button class="listen-btn" id="listenBtn">🔊 Hear the word</button>';
+    html += '<div class="typed-display placeholder" id="typedDisplay"></div>';
+    html += '<div class="message" id="message"></div>';
+    html += '<button class="keyboard-toggle" id="toggleKeyboardBtn"></button>';
+    html += '<div class="keyboard-grid" id="keyboardGrid"></div>';
+    html += '<button class="check-btn" id="checkBtn">✅ Check</button>';
+    html += '<button class="next-btn" id="nextBtn">Next word ➡</button>';
+
+    app.innerHTML = html;
+    document.getElementById("backHome").addEventListener("click", showHome);
+    document.getElementById("listenBtn").addEventListener("click", function(){ announceWord(item.w); });
+    document.getElementById("checkBtn").addEventListener("click", triggerCheck);
+    document.getElementById("nextBtn").addEventListener("click", function(){
+      current.index++;
+      renderWord();
+    });
+    document.getElementById("toggleKeyboardBtn").addEventListener("click", function(){
+      showOnscreenKeyboard = !showOnscreenKeyboard;
+      saveShowKeyboard(showOnscreenKeyboard);
+      renderKeyboardGrid();
+      updateKeyboardToggleLabel();
+    });
+
+    updateKeyboardToggleLabel();
+    renderKeyboardGrid();
+    updateTypedDisplay();
+
+    setTimeout(function(){ announceWord(item.w); }, 300);
+  }
+
+  function updateKeyboardToggleLabel(){
+    var btn = document.getElementById("toggleKeyboardBtn");
+    if(btn) btn.textContent = showOnscreenKeyboard ? "🙈 Hide on-screen keyboard" : "⌨️ Show on-screen keyboard (use your own)";
+  }
+
+  function renderKeyboardGrid(){
+    var grid = document.getElementById("keyboardGrid");
+    if(!grid) return;
+    if(!showOnscreenKeyboard){
+      grid.innerHTML = "";
+      return;
+    }
+    var html = "";
+    "abcdefghijklmnopqrstuvwxyz".split("").forEach(function(ch){
+      html += '<button class="key-tile" data-letter="'+ch+'">'+ch.toUpperCase()+'</button>';
+    });
+    html += '<button class="key-tile key-wide key-backspace" id="backspaceKey">⌫</button>';
+    grid.innerHTML = html;
+    grid.querySelectorAll(".key-tile[data-letter]").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        appendLetter(btn.getAttribute("data-letter"));
+      });
+    });
+    document.getElementById("backspaceKey").addEventListener("click", removeLetter);
+  }
+
+  function appendLetter(ch){
+    if(!current || current.mode !== "test" || current.locked) return;
+    if(current.typed.length >= 20) return;
+    current.typed += ch;
+    updateTypedDisplay();
+  }
+
+  function removeLetter(){
+    if(!current || current.mode !== "test" || current.locked) return;
+    current.typed = current.typed.slice(0,-1);
+    updateTypedDisplay();
+  }
+
+  function updateTypedDisplay(){
+    var el = document.getElementById("typedDisplay");
+    if(!el) return;
+    if(current.typed){
+      el.textContent = current.typed.toUpperCase();
+      el.classList.remove("placeholder");
+    } else {
+      el.textContent = "Listen, then write it here";
+      el.classList.add("placeholder");
+    }
+  }
+
+  function triggerCheck(){
+    if(!current || current.mode !== "test" || current.locked) return;
+    var item = current.queue[current.index];
+    var msgEl = document.getElementById("message");
+    var guess = current.typed.trim().toLowerCase();
+    if(!guess){
+      msgEl.textContent = "Write something first!";
+      msgEl.className = "message bad";
+      return;
+    }
+    current.attempts++;
+    if(guess === item.w){
+      var key = current.levelId+":"+item.w;
+      if(!progress.done[key]){
+        progress.done[key] = true;
+        progress.stars++;
+        saveProgress(progress);
+        renderTotalStars();
+      }
+      current.sessionResults.push({word:item.w, passed:true, attempts:current.attempts});
+      var celebration = pickCelebration();
+      msgEl.textContent = celebration.emoji + " " + celebration.text;
+      msgEl.className = "message good";
+      speakCelebration(celebration.text);
+      launchConfetti();
+      lockTestWord();
+    } else if(current.attempts >= 2){
+      current.sessionResults.push({word:item.w, passed:false, attempts:current.attempts});
+      var reveal = item.e ? (item.e + " ") : "";
+      msgEl.textContent = "The word was: " + reveal + item.w.toUpperCase();
+      msgEl.className = "message bad";
+      announcePhraseThenWord("The word is", item.w);
+      lockTestWord();
+    } else {
+      msgEl.textContent = "Not quite, try again!";
+      msgEl.className = "message bad";
+      speak("Try again");
+      current.typed = "";
+      updateTypedDisplay();
+    }
+  }
+
+  function lockTestWord(){
+    current.locked = true;
+    document.getElementById("nextBtn").classList.add("show");
+    document.getElementById("checkBtn").disabled = true;
+    document.querySelectorAll(".key-tile").forEach(function(t){ t.disabled = true; });
+  }
+
+  function renderLevelComplete(){
+    var lvl = LEVELS[current.levelId];
+    var html = '';
+    html += '<div class="game-header"><button class="back-btn" id="backHome">⬅ Back</button><span></span></div>';
+
+    if(current.mode === "test"){
+      var results = current.sessionResults;
+      var correct = results.filter(function(r){ return r.passed; }).length;
+      var missed = results.filter(function(r){ return !r.passed; });
+      html += '<div class="picture">'+(missed.length === 0 ? '🏆' : '📝')+'</div>';
+      html += '<h1>Test finished!</h1>';
+      html += '<p class="sub">You spelled '+correct+' / '+results.length+' words correctly</p>';
+      if(missed.length){
+        html += '<div class="results-list"><div class="results-row"><strong>Words to practice more:</strong></div>';
+        missed.forEach(function(r){
+          html += '<div class="results-row"><span>'+r.word+'</span><span>✍️</span></div>';
+        });
+        html += '</div>';
+      }
+      html += '<button class="listen-btn" id="playAgain">🔁 Try again</button>';
+      app.innerHTML = html;
+      document.getElementById("backHome").addEventListener("click", showHome);
+      document.getElementById("playAgain").addEventListener("click", function(){
+        startLevel(current.levelId, current.mode);
+      });
+      speak(missed.length === 0 ? "Amazing! You got every word right!" : "Good try! You got " + correct + " out of " + results.length);
+      if(missed.length === 0) launchConfetti();
+    } else {
+      var earned = levelStarCount(current.levelId);
+      html += '<div class="picture">🏆</div>';
+      html += '<h1>You finished '+lvl.name+'!</h1>';
+      html += '<p class="sub">You earned 🌟 '+earned+' / '+lvl.words.length+' stars</p>';
+      html += '<button class="listen-btn" id="playAgain">🔁 Play again</button>';
+      app.innerHTML = html;
+      document.getElementById("backHome").addEventListener("click", showHome);
+      document.getElementById("playAgain").addEventListener("click", function(){
+        startLevel(current.levelId, current.mode);
+      });
+      speak("Great job! You finished " + lvl.name);
+      launchConfetti();
+    }
+  }
+
+  // ---------- Confetti ----------
+  var CONFETTI_EMOJI = ["🍬","🍭","🍫","🙌","👏","🌟","🎉","🥳"];
+  function launchConfetti(){
+    playCelebrationSound();
+    for(var i=0;i<18;i++){
+      (function(i){
+        setTimeout(function(){
+          var el = document.createElement("div");
+          el.className = "confetti";
+          el.textContent = CONFETTI_EMOJI[Math.floor(Math.random()*CONFETTI_EMOJI.length)];
+          el.style.left = Math.floor(Math.random()*100) + "vw";
+          el.style.animationDuration = (2 + Math.random()*1.5) + "s";
+          document.body.appendChild(el);
+          setTimeout(function(){ el.remove(); }, 4000);
+        }, i*60);
+      })(i);
+    }
+  }
+
+  // ---------- Init ----------
+  document.getElementById("homeLink").addEventListener("click", showHome);
+  showHome();
+})();
+</script>
+</body>
+</html>
