@@ -580,50 +580,94 @@
     return pickDefaultVoice();
   }
 
-  function queueSpeech(text, rate){
+  function queueSpeech(text, rate, pitch){
     if(!("speechSynthesis" in window)) return;
     try{
       var u = new SpeechSynthesisUtterance(text);
       u.rate = rate;
-      u.pitch = 1.0;
+      u.pitch = pitch === undefined ? 1.0 : pitch;
       var v = getActiveVoice();
       if(v) u.voice = v;
       window.speechSynthesis.speak(u);
     }catch(e){}
   }
-  // Short phrases and celebrations, spoken at a natural pace.
+  // Short phrases, spoken at a natural pace with a touch of pitch variation
+  // so it doesn't sound flat and robotic every time.
   function speak(text, rate){
     if(!("speechSynthesis" in window)) return;
     try{ window.speechSynthesis.cancel(); }catch(e){}
-    queueSpeech(text, rate || 0.95);
+    queueSpeech(text, rate || 0.98, 0.95 + Math.random()*0.15);
   }
-  // The word itself, spoken slower and clearly so it's easy to make out.
+  // Celebration lines: faster and noticeably higher-pitched, so it actually
+  // sounds excited instead of a flat "correct" beep.
+  function speakCelebration(text){
+    if(!("speechSynthesis" in window)) return;
+    try{ window.speechSynthesis.cancel(); }catch(e){}
+    queueSpeech(text, 1.05 + Math.random()*0.1, 1.2 + Math.random()*0.25);
+  }
+  // The word itself, spoken clearly so it's easy to make out. Rate is
+  // slowed a little for clarity but kept close to natural so it doesn't
+  // sound dead; pitch gets the same light natural variation as speak().
   function announceWord(word){
     if(!("speechSynthesis" in window)) return;
     try{ window.speechSynthesis.cancel(); }catch(e){}
-    queueSpeech(word, 0.68);
+    queueSpeech(word, 0.8, 0.97 + Math.random()*0.1);
   }
   // A short lead-in phrase followed by the word, spoken clearly.
   function announcePhraseThenWord(phrase, word){
     if(!("speechSynthesis" in window)) return;
     try{ window.speechSynthesis.cancel(); }catch(e){}
-    queueSpeech(phrase, 0.95);
-    queueSpeech(word, 0.68);
+    queueSpeech(phrase, 0.98);
+    queueSpeech(word, 0.8);
   }
 
-  // ---------- Celebrations ----------
+  // ---------- Celebrations (message + speech + sound) ----------
   var CELEBRATIONS = [
     {emoji:"🍬", text:"Sweet! You got it!"},
-    {emoji:"🍭", text:"Yummy, a candy for you!"},
+    {emoji:"🍭", text:"Yummy! A candy for you!"},
     {emoji:"🍫", text:"Delicious! Well done!"},
     {emoji:"🙌", text:"High five!"},
     {emoji:"👏", text:"Great job!"},
-    {emoji:"🌟", text:"Superstar!"},
-    {emoji:"🥳", text:"Woohoo, you did it!"},
-    {emoji:"🎉", text:"Awesome work!"}
+    {emoji:"🌟", text:"Wow, superstar!"},
+    {emoji:"🥳", text:"Woohoo! You did it!"},
+    {emoji:"🎉", text:"Yay! Awesome work!"}
   ];
   function pickCelebration(){
     return CELEBRATIONS[Math.floor(Math.random()*CELEBRATIONS.length)];
+  }
+
+  // ---------- Celebration sound effect ----------
+  var audioCtx = null;
+  function getAudioCtx(){
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if(!AC) return null;
+    if(!audioCtx) audioCtx = new AC();
+    if(audioCtx.state === "suspended"){ try{ audioCtx.resume(); }catch(e){} }
+    return audioCtx;
+  }
+  function playChimeNote(ctx, freq, startTime, duration, peak){
+    var osc = ctx.createOscillator();
+    var gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.0001, startTime);
+    gain.gain.linearRampToValueAtTime(peak, startTime + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(startTime);
+    osc.stop(startTime + duration + 0.02);
+  }
+  function playCelebrationSound(){
+    try{
+      var ctx = getAudioCtx();
+      if(!ctx) return;
+      var now = ctx.currentTime;
+      var notes = [523.25, 659.25, 783.99, 1046.5]; // C5 E5 G5 C6 - a happy little "ta-da"
+      notes.forEach(function(freq, i){
+        playChimeNote(ctx, freq, now + i*0.09, 0.28, 0.18);
+      });
+    }catch(e){}
   }
 
   // ---------- App state ----------
@@ -966,7 +1010,7 @@
       var celebration = pickCelebration();
       msgEl.textContent = celebration.emoji + " " + celebration.text;
       msgEl.className = "message good";
-      speak(celebration.text);
+      speakCelebration(celebration.text);
       launchConfetti();
       document.getElementById("nextBtn").classList.add("show");
       // disable tiles
@@ -1149,7 +1193,7 @@
       var celebration = pickCelebration();
       msgEl.textContent = celebration.emoji + " " + celebration.text;
       msgEl.className = "message good";
-      speak(celebration.text);
+      speakCelebration(celebration.text);
       launchConfetti();
       lockTestWord();
     } else if(current.attempts >= 2){
@@ -1221,6 +1265,7 @@
   // ---------- Confetti ----------
   var CONFETTI_EMOJI = ["🍬","🍭","🍫","🙌","👏","🌟","🎉","🥳"];
   function launchConfetti(){
+    playCelebrationSound();
     for(var i=0;i<18;i++){
       (function(i){
         setTimeout(function(){
