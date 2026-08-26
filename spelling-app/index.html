@@ -97,8 +97,15 @@
   .level-primary{background:linear-gradient(135deg,var(--pink),#c94574);}
   .level-btn .stars-earned{font-size:15px;font-weight:normal;opacity:.95;}
 
-  .progress-btn{
+  .btn-row{
+    display:flex;
+    gap:10px;
+    justify-content:center;
+    flex-wrap:wrap;
     margin-top:18px;
+  }
+  .progress-btn{
+    margin-top:0;
     background:none;
     border:2px dashed #bbb;
     border-radius:16px;
@@ -107,6 +114,17 @@
     color:#777;
     cursor:pointer;
     font-family:inherit;
+  }
+  .voice-select{
+    width:100%;
+    padding:12px 14px;
+    font-size:16px;
+    border:2px solid #ddd;
+    border-radius:12px;
+    font-family:inherit;
+    color:var(--ink);
+    background:#fff;
+    margin-bottom:16px;
   }
 
   /* Game screen */
@@ -509,28 +527,57 @@
   // ---------- Speech ----------
   var FEMALE_VOICE_HINTS = [
     "female","samantha","victoria","karen","moira","tessa","fiona","zira","hazel",
-    "susan","kate","serena","allison","ava","emma","joanna","salli","kendra","kimberly","google us english"
+    "susan","kate","serena","allison","ava","emma","joanna","salli","kendra","kimberly",
+    "heera","veena","priya","google us english"
   ];
-  var preferredVoice = null;
-  function pickFemaleVoice(){
-    if(!("speechSynthesis" in window)) return null;
-    var voices = window.speechSynthesis.getVoices();
-    if(!voices || !voices.length) return null;
-    var englishVoices = voices.filter(function(v){ return /^en/i.test(v.lang); });
-    var pool = englishVoices.length ? englishVoices : voices;
-    for(var i=0;i<pool.length;i++){
-      var name = pool[i].name.toLowerCase();
-      for(var j=0;j<FEMALE_VOICE_HINTS.length;j++){
-        if(name.indexOf(FEMALE_VOICE_HINTS[j]) !== -1) return pool[i];
-      }
+  function isFemaleVoiceName(name){
+    name = (name || "").toLowerCase();
+    for(var i=0;i<FEMALE_VOICE_HINTS.length;i++){
+      if(name.indexOf(FEMALE_VOICE_HINTS[i]) !== -1) return true;
     }
+    return false;
+  }
+  function getAllVoices(){
+    if(!("speechSynthesis" in window)) return [];
+    return window.speechSynthesis.getVoices() || [];
+  }
+  // Prefer an Indian-English voice (any installed on this browser/device);
+  // among those, prefer one that sounds female. Otherwise fall back to any
+  // female-sounding English voice, then any English voice, then whatever's first.
+  function pickDefaultVoice(){
+    var voices = getAllVoices();
+    if(!voices.length) return null;
+    var indian = voices.filter(function(v){ return /^en-in/i.test(v.lang); });
+    if(indian.length){
+      for(var i=0;i<indian.length;i++){ if(isFemaleVoiceName(indian[i].name)) return indian[i]; }
+      return indian[0];
+    }
+    var english = voices.filter(function(v){ return /^en/i.test(v.lang); });
+    var pool = english.length ? english : voices;
+    for(var j=0;j<pool.length;j++){ if(isFemaleVoiceName(pool[j].name)) return pool[j]; }
     return pool[0];
   }
-  if("speechSynthesis" in window){
-    preferredVoice = pickFemaleVoice();
-    window.speechSynthesis.addEventListener("voiceschanged", function(){
-      preferredVoice = pickFemaleVoice();
-    });
+
+  var VOICE_PREF_KEY = "spellingStarsVoiceURI";
+  function loadVoicePref(){
+    try{ return localStorage.getItem(VOICE_PREF_KEY) || ""; }catch(e){ return ""; }
+  }
+  function saveVoicePref(uri){
+    try{ localStorage.setItem(VOICE_PREF_KEY, uri); }catch(e){}
+  }
+  var voicePref = loadVoicePref();
+
+  // The voice actually used: the parent's manual pick if it's still available,
+  // otherwise the best automatic guess.
+  function getActiveVoice(){
+    var voices = getAllVoices();
+    if(!voices.length) return null;
+    if(voicePref){
+      for(var i=0;i<voices.length;i++){
+        if(voices[i].voiceURI === voicePref) return voices[i];
+      }
+    }
+    return pickDefaultVoice();
   }
 
   function queueSpeech(text, rate){
@@ -539,7 +586,8 @@
       var u = new SpeechSynthesisUtterance(text);
       u.rate = rate;
       u.pitch = 1.0;
-      if(preferredVoice) u.voice = preferredVoice;
+      var v = getActiveVoice();
+      if(v) u.voice = v;
       window.speechSynthesis.speak(u);
     }catch(e){}
   }
@@ -553,14 +601,14 @@
   function announceWord(word){
     if(!("speechSynthesis" in window)) return;
     try{ window.speechSynthesis.cancel(); }catch(e){}
-    queueSpeech(word, 0.72);
+    queueSpeech(word, 0.68);
   }
   // A short lead-in phrase followed by the word, spoken clearly.
   function announcePhraseThenWord(phrase, word){
     if(!("speechSynthesis" in window)) return;
     try{ window.speechSynthesis.cancel(); }catch(e){}
     queueSpeech(phrase, 0.95);
-    queueSpeech(word, 0.72);
+    queueSpeech(word, 0.68);
   }
 
   // ---------- Celebrations ----------
@@ -606,11 +654,15 @@
       '<span class="stars-earned">'+(customCount ? (customCount+' word'+(customCount===1?'':'s')) : 'Add your own words')+'</span>' +
       '</button>';
     html += '</div>';
-    html += '<button class="progress-btn" id="progressBtn">See my progress</button>';
+    html += '<div class="btn-row">' +
+      '<button class="progress-btn" id="progressBtn">See my progress</button>' +
+      '<button class="progress-btn" id="voiceBtn">🔊 Voice settings</button>' +
+      '</div>';
     app.innerHTML = html;
 
     document.getElementById("customLevelBtn").addEventListener("click", showCustomEditor);
     document.getElementById("progressBtn").addEventListener("click", showProgress);
+    document.getElementById("voiceBtn").addEventListener("click", showVoiceSettings);
   }
 
   // ---------- Progress screen ----------
@@ -629,6 +681,50 @@
     html += '<div class="badge">'+badge+'</div>';
     app.innerHTML = html;
     document.getElementById("backHome").addEventListener("click", showHome);
+  }
+
+  // ---------- Voice settings ----------
+  function showVoiceSettings(){
+    var html = '<div class="game-header"><button class="back-btn" id="backHome">⬅ Back</button><span></span></div>';
+    html += '<h1>Voice Settings</h1>';
+    html += '<p class="sub">Pick whichever voice sounds clearest on this device. Indian English voices (🇮🇳) are preferred automatically when one is installed.</p>';
+    html += '<select class="voice-select" id="voiceSelect"><option>Loading voices&hellip;</option></select>';
+    html += '<button class="listen-btn" id="tryVoiceBtn">🔊 Try this voice</button>';
+    html += '<div class="form-error" id="voiceHint"></div>';
+    app.innerHTML = html;
+    document.getElementById("backHome").addEventListener("click", showHome);
+    document.getElementById("tryVoiceBtn").addEventListener("click", function(){
+      announceWord("hammer");
+    });
+    populateVoiceSelect();
+    if("speechSynthesis" in window && !getAllVoices().length){
+      window.speechSynthesis.addEventListener("voiceschanged", populateVoiceSelect);
+    }
+  }
+
+  function populateVoiceSelect(){
+    var select = document.getElementById("voiceSelect");
+    if(!select) return;
+    var voices = getAllVoices();
+    var html = '<option value="">✨ Auto (recommended)</option>';
+    voices.forEach(function(v){
+      var indianFlag = /^en-in/i.test(v.lang) ? " 🇮🇳" : "";
+      var label = v.name + " (" + v.lang + ")" + indianFlag;
+      var selected = v.voiceURI === voicePref ? " selected" : "";
+      html += '<option value="'+v.voiceURI.replace(/"/g,"&quot;")+'"'+selected+'>'+label+'</option>';
+    });
+    select.innerHTML = html;
+    select.onchange = function(){
+      voicePref = select.value;
+      saveVoicePref(voicePref);
+      announceWord("hammer");
+    };
+    var hint = document.getElementById("voiceHint");
+    if(hint){
+      var hasIndian = voices.some(function(v){ return /^en-in/i.test(v.lang); });
+      hint.textContent = (voices.length && !hasIndian) ?
+        "No Indian English voice was found on this browser/device. Try Chrome on Android, or check your device's language/voice settings to install one." : "";
+    }
   }
 
   // ---------- Custom word editor ----------
